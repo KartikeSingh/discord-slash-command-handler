@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://https://github.com/KartikeSingh/discord-slash-command-handler.git"
+    "url": "https://github.com/KartikeSingh/discord-slash-command-handler"
   },
   "keywords": [
     "discord slash commands",
