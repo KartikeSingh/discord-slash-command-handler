@@ -219,3 +219,9 @@ errorType = "noPermission" | "exception" | "lessArguments" | "timeout";
 ```
 
 # Report Problems at
+
+[Github](https://github.com/KartikeSingh/discord-slash-command-handler/issues)
+
+# Links
+
+[Support Server](https://discord.gg/XYnMTQNTFh)
