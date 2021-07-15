@@ -142,6 +142,7 @@ class commandHandler extends EventEmitter {
                     interaction: interaction,
                     content: `/${interaction.data.name} ${args.join(" ")}`,
                     member: interaction.member,
+                    createdAt:Date.now()
                 };
 
                 const command_data = {

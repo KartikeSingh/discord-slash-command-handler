@@ -4,6 +4,13 @@
 npm i discord-slash-command-handler
 ```
 
+# Why use our package ?
+
+* Fast and secure
+* Easy to use
+* Active support on discord
+* Easily convert normal commands to slash commands
+
 # Basic handler example
 
 ```js
@@ -227,13 +234,29 @@ module.exports = {
 // Add slash porperty
 slash : true, // true => only slash command, "both" => slash and normal command, false => normal command
 
-// All done. but there are few limitations like, message object is not Discord.Message object, it is an custom objected created by us its properties are listen in # datatype 's slash_command
-
+// All done. but there are few limitations like, message object is not Discord.Message object
+// it is an custom objected created by us its properties are listen in # datatype 's slash_command
 ```
+
 ## Changes
-```diff
-- message.reply
-+ channel.send
+```js
+// All of the message functions will not work
+
+// Examples : 
+message.reply() , message.delete() // etc will not work
+
+// try using
+channel.send()
+// Still having troubles ? contact me on discord
+```
+
+# Specials
+```js
+...
+
+handler.reloadCommands(); // to reload the commands
+
+...
 ```
 
 # Date Types
@@ -258,6 +281,7 @@ slash_message = {
     channel, // the channel where command was used
     interaction, // the ineraction if it is an slash command
     content, // the message contnet
+    createdAT, // timestamps of the message creation
 }
 
 errorType = "noPermission" | "exception" | "lessArguments" | "timeout";
@@ -270,4 +294,4 @@ errorType = "noPermission" | "exception" | "lessArguments" | "timeout";
 
 # Links
 
-[Support Server](https://discord.gg/XYnMTQNTFh)
+[Discord](https://discord.gg/XYnMTQNTFh)
