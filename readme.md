@@ -11,6 +11,7 @@ const client = new Discord.client(options);
 const Handler = require('discord-slash-command-handler');
 
 client.on('ready',()=>{
+    // replace src/commands to the path to your commands folder.
     const handler = new Handler(client,"src/commands",{guilds:["guild id"]});
 
     console.log("bot is up");
@@ -26,17 +27,41 @@ const client = new Discord.client(options);
 const Handler = require('discord-slash-command-handler');
 
 client.on('ready',()=>{
-    const handler = new Handler(client,"src/commands",
-    {
-        slashGuilds:["guild id"], // Guild ID(s) where you want to enable slash commands (if slash command isn't global)
-        handleSlash: true, //  If you want automatic slash handler, false for no handler, both for both automaitc and non automatic handler more expalantion is give below
-        handleNormal: false,//  If you want automatic normal handler, false for no handler, both for both automaitc and non automatic handler more expalantion is give below
+    // replace src/commands to the path to your commands folder.
+    const handler = new Handler(client,"src/commands", {
+        // Guild ID(s) where you want to enable slash commands (if slash command isn't global)
+        slashGuilds:["guild id"], 
+
+        // User ID(s) , these users will be considered as bot owners
+        owners:["user id"], 
+        
+        handleSlash: true, 
+        /* True => If you want automatic slash handler
+         * False => if you want to handle commands yourself
+         * 'both' =>  in this case instead of running the command itself we will invoke an event called 'slashCommand'
+         */
+        
+        handleNormal: false,
+        /* True => If you want automatic normal handler
+         * False => if you want to handle commands yourself
+         * 'both' =>  in this case instead of running the command itself we will invoke an event called 'normalCommand'
+         */
+
         prefix: "k!", // Bot's prefix
         timeouts: true, // If you want to add timeouts in commands
         handleTimeout: true, // if you want us to handle timeouts, false if not
-        permissionReply: "You don't have enough permissions to use this command", // reply to send when user don't have enough permissions to use the command
-        timeoutMessage: "You are on a timeout", // reply to send when user is on a timeout
-        errorReply: "Unable to run this command due to errors", // reply to send when there is an error in command
+
+        // reply to send when user don't have enough permissions to use the command
+        permissionReply: "You don't have enough permissions to use this command",   
+
+        // reply to send when user is on a timeout      
+        timeoutMessage: "You are on a timeout",
+
+        // reply to send when there is an error in command
+        errorReply: "Unable to run this command due to errors",
+
+        // reply to send when command is ownerOnly and user isn't a owner
+        notOwnerReply: "Only bot owner's can use this command",
     });
 
     console.log("bot is up");
@@ -52,13 +77,14 @@ client.login(token);
 bot.on('ready',()=>{
     ...
 
-    // Custom normal command handler
+    // Custom normal command handler, this function works when handleNormal is 'both'
     handler.on('normalCommand',(command,command_data)=>{
         // handle the command
         // command is your normal command object , for command_data go down below to data types
     })
 
      
+    // Custom slash command handler, this function works when handleSlash is 'both'
     handler.on('slashCommand',(command,command_data)=>{
         // handle the command
         // command is your normal command object , for command_data go down below to data types
@@ -71,57 +97,57 @@ bot.on('ready',()=>{
 # All available events
 
 ```js
+// this event is invoked when Commands are added to client / Commands are loaded
 handler.on('commandsCreated',(commands,commandAliases)=>{
-    // this event is invoked when commands are added
-    /**
+     /*
       * commands : the collection of all the bot commands
       * commandAliases : the collection of all the bot command's aliases
       */
 });
 
+// this event is invoked when a user used a slash command and handleSlash is 'both'
 handler.on('slashCommand',(commands,command_data)=>{
-    // this event is invoked when a user used a slash command
-    /**
+     /*
       * commands : the command used
       * command_data : the command data ( for more info read data types at bottom )
       */
 });
 
+// this event is invoked when a user used a normal command and handleNormal is 'both'
 handler.on('normalCommand',(commands,command_data)=>{
-    // this event is invoked when a user used a normal command
-    /**
+     /*
       * commands : the command used
       * command_data : the command data ( for more info read data types at bottom )
       */
 });
 
+// This event is invoked when user don't provides enough arguments in a command
 handler.on('lessArguments',(commands,message)=>{
-    // This event is invoked when user don't provides enough arguments in a command
-    /**
+     /*
       * commands : the command used
       * message : the Discord message object
       */
 });
 
+// This event is invoked when user don't have enough permissions to use a command
 handler.on('noPermission',(commands,message)=>{
-    // This event is invoked when user don't have enough permissions to use a command
-    /**
+     /*
       * commands : the command used
       * message : the Discord message object
       */
 });
 
-handler.on('timeout',(commands,message)=>{
     // This event is invoked when user is on a timeout to use a command
-    /**
+handler.on('timeout',(commands,message)=>{
+     /*
       * commands : the command used
       * message : the Discord message object
       */
 });
 
+// This event is invoked when an unknown error occurs while running a command
 handler.on('exception',(commands,message,error)=>{
-    // This event is invoked when an unknown error occurs while running a command
-    /**
+     /*
       * commands : the command used
       * message : the Discord message object
       * error : the error
@@ -146,6 +172,8 @@ module.exports = {
     slash: "both", // true => if only slash, false => if only normal, "both" => both slash and normal
     
     global:false, // false => work in all guilds provided in options, true => works globally
+
+    ownerOnly:false, // false => work for all users, true => works only for bot owners
     
     timeout:10000 | '10s', // the timeout on the command
     
@@ -192,6 +220,22 @@ module.exports = {
 }
 ```
 
+# Convert Normal Command to Slash Command
+
+## Additions
+```js
+// Add slash porperty
+slash : true, // true => only slash command, "both" => slash and normal command, false => normal command
+
+// All done. but there are few limitations like, message object is not Discord.Message object, it is an custom objected created by us its properties are listen in # datatype 's slash_command
+
+```
+## Changes
+```diff
+- message.reply
++ channel.send
+```
+
 # Date Types
 
 ```js
@@ -203,6 +247,7 @@ command_data = {
     args, // the array of arguments
     member, // the guild member object
     message, // the message object if normal command, in slash command it have less attributes ( to check its attribute read slash_message )
+    createdAt, // the timestamps when the command was created
 }
 
 slash_message = {
@@ -217,6 +262,7 @@ slash_message = {
 
 errorType = "noPermission" | "exception" | "lessArguments" | "timeout";
 ```
+
 
 # Report Problems at
 

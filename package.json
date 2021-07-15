@@ -14,7 +14,8 @@
     "discord slash commands",
     "slash commands",
     "discord slash command",
-    "command handler"
+    "command handler",
+    "discord slash commands handler"
   ],
   "author": "shisui",
   "license": "ISC",
