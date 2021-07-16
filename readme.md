@@ -14,6 +14,7 @@ npm i discord-slash-command-handler
 # Basic handler example
 
 ```js
+// NOTE : only Discord.js V 12 is supported
 const client = new Discord.client(options);
 const Handler = require('discord-slash-command-handler');
 
@@ -221,8 +222,7 @@ module.exports = {
 
     // Required
     run: async (command_data) => {
-        // you command code
-        // you can replace run to execute too.
+        // your command's code
     }
 }
 ```
@@ -270,7 +270,7 @@ command_data = {
     args, // the array of arguments
     member, // the guild member object
     message, // the message object if normal command, in slash command it have less attributes ( to check its attribute read slash_message )
-    createdAt, // the timestamps when the command was created
+    handler, // the instance of your command handler
 }
 
 slash_message = {

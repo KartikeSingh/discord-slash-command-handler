@@ -21,8 +21,8 @@ const Options = [{
  * @returns {Array<Options>} Returns an array of options
  */
 function getOptions(args, argsDescription = "", argsType = "") {
-    let last = "", lastIndex = 0;args[0]
-    argsDescription = argsDescription?.length > 1 ? argsDescription?.split("|") : undefined || [], argsType = argsType?.length > 1 ? argsType?.split("|") : undefined || [], index = 0;
+    let last = "", lastIndex = 0; args[0]
+    argsDescription = argsDescription?.length > 1 ? argsDescription?.split("|") : [] || [], argsType = argsType?.length > 1 ? argsType?.split("|") : [] || [], index = 0;
 
     const req = [], opt = [];
 
@@ -49,8 +49,13 @@ function getOptions(args, argsDescription = "", argsType = "") {
  * @returns {Number} Returns the int type
  */
 function getType(type) {
-    type = type?.toUpperCase()?.trim();
-    return type === "SUB_COMMAND" ? 1 : type === "SUB_COMMAND_GROUP" ? 2 : type === "STRING" ? 3 : type === "INTEGER" ? 4 : type === "BOOLEAN" ? 5 : type === "USER" ? 6 : type === "CHANNEL" ? 7 : type === "ROLE" ? 8 : 3;
+    try {
+        if (typeof (type) === "number" && type > 0 && type < 9) return type;
+        type = type?.toUpperCase()?.trim();
+        return type === "SUB_COMMAND" ? 1 : type === "SUB_COMMAND_GROUP" ? 2 : type === "STRING" ? 3 : type === "INTEGER" ? 4 : type === "BOOLEAN" ? 5 : type === "USER" ? 6 : type === "CHANNEL" ? 7 : type === "ROLE" ? 8 : 3;
+    } catch (e) {
+        return 3;
+    }
 }
 
 module.exports = { getOptions, getType }
