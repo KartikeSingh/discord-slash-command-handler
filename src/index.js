@@ -70,7 +70,7 @@ class commandHandler extends EventEmitter {
 
                     this.client.commands.set(command.name, command);
                     command.name = command.name.replace(/ /g, "-").toLowerCase();
-                    command.aliases?.forEach((v) => this.commandAliases.set(v, command.name));
+                    command.aliases?.forEach((v) => this.client.commandAliases.set(v, command.name));
 
                     _commands++;
 
