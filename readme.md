@@ -11,6 +11,9 @@ npm i discord-slash-command-handler
 * Active support on discord
 * Easily convert normal commands to slash commands
 
+# Example bot source code
+[here](https://github.com/KartikeSingh/discord-slash-command)
+
 # Basic handler example
 
 ```js
