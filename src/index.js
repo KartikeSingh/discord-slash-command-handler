@@ -43,18 +43,18 @@ class commandHandler extends EventEmitter {
         this.client.commandAliases = new Map();
         this.timeouts = new Map();
 
-        this.#setCommands().then(() => {
+        this.setCommands().then(() => {
             this.emit("commandsCreated", this.client.commands, this.client.commandAliases);
 
-            if (this.options.handleSlash === "both" || this.options.handleSlash === true) this.#handleSlashCommands();
+            if (this.options.handleSlash === "both" || this.options.handleSlash === true) this.handleSlashCommands();
             if (this.options.handleNormal === true || this.options.handleNormal === "both") {
                 if (!this.options.prefix) throw new Error("Please provide a prefix, if you want us to handle Normal Commands");
-                this.#handleNormalCommands();
+                this.handleNormalCommands();
             }
         })
     }
 
-    async #setCommands() {
+    async setCommands() {
         return new Promise(async (resolve, reject) => {
             try {
                 const commands = fs.readdirSync(this.commandFolder)?.filter(file => file.endsWith(".js"));
@@ -116,7 +116,7 @@ class commandHandler extends EventEmitter {
         })
     }
 
-    async #handleSlashCommands() {
+    async handleSlashCommands() {
         this.client.ws.on('INTERACTION_CREATE', async (interaction) => {
             let command;
             try {
@@ -125,9 +125,9 @@ class commandHandler extends EventEmitter {
 
                 if (!command) return;
 
-                if (command.ownerOnly && !this.options.owners?.includes(interaction.member.user.id)) return this.#replyToInteraction(interaction, this.options.notOwnerReply || _options.notOwnerReply);
+                if (command.ownerOnly && !this.options.owners?.includes(interaction.member.user.id)) return this.replyToInteraction(interaction, this.options.notOwnerReply || _options.notOwnerReply);
 
-                if (this.timeouts.get(`${interaction.member.user.id}_${interaction.data.name}`)) return this.#replyToInteraction(interaction, this.options.timeoutMessage || options.timeoutMessage);
+                if (this.timeouts.get(`${interaction.member.user.id}_${interaction.data.name}`)) return this.replyToInteraction(interaction, this.options.timeoutMessage || options.timeoutMessage);
 
                 const args = [], guild = this.client.guilds.cache.get(interaction.guild_id), channel = this.client.channels.cache.get(interaction.channel_id);
                 const member = guild.members.cache.get(interaction.member.user.id);
@@ -163,12 +163,12 @@ class commandHandler extends EventEmitter {
                     if (typeof (command.error) === "function") {
                         command.error("noPermissions", command, message);
                     } else {
-                        await this.#replyToInteraction(interaction, this.options.permissionReply || _options.permissionReply);
+                        await this.replyToInteraction(interaction, this.options.permissionReply || _options.permissionReply);
                     }
                     return;
                 }
 
-                await this.#replyToInteraction(interaction, "command accepted");
+                await this.replyToInteraction(interaction, "command accepted");
 
                 const timeout = (isNaN(command.timeout) && command.timeout) ? ms(command.timeout || " ") : command.timeout || (isNaN(command.cooldown) && command.cooldown) ? ms(command.cooldown || " ") : command.cooldown;
 
@@ -184,13 +184,13 @@ class commandHandler extends EventEmitter {
                     command.error("exception", command, message, e);
                     this.emit("exception", command, message, e);
                 } else {
-                    await this.#replyToInteraction(interaction, this.options.errorReply || _options.errorReply);
+                    await this.replyToInteraction(interaction, this.options.errorReply || _options.errorReply);
                 }
             }
         })
     }
 
-    async #handleNormalCommands() {
+    async handleNormalCommands() {
         this.client.on('message', async (message) => {
             let command;
             try {
@@ -277,7 +277,7 @@ class commandHandler extends EventEmitter {
 
     }
 
-    async #replyToInteraction(interaction, content) {
+    async replyToInteraction(interaction, content) {
         try {
             this.client.api.interactions(interaction.id, interaction.token).callback.post({
                 data: {
@@ -301,7 +301,7 @@ class commandHandler extends EventEmitter {
         await this.client.commandAliases.clear();
 
         return new Promise((res, rej) => {
-            this.#setCommands()
+            this.setCommands()
                 .then((v) => {
                     res(this.client.commands, this.client.commandAliases)
                     console.log("[discord-slash-command-handler] : Commands are reloaded")
