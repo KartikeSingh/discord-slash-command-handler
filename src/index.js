@@ -66,7 +66,7 @@ class commandHandler extends EventEmitter {
                 for (let i = 0; i < commands.length; i++) {
                     const command = require(`${this.commandFolder}/${commands[i]}`);
 
-                    if (!command.name || (!command.run && !command.execute)) continue;
+                    if (!command.name || !command.run) continue;
 
                     this.client.commands.set(command.name, command);
                     command.name = command.name.replace(/ /g, "-").toLowerCase();
@@ -130,17 +130,17 @@ class commandHandler extends EventEmitter {
                 if (this.timeouts.get(`${interaction.member.user.id}_${interaction.data.name}`)) return this.#replyToInteraction(interaction, this.options.timeoutMessage || options.timeoutMessage);
 
                 const args = [], guild = this.client.guilds.cache.get(interaction.guild_id), channel = this.client.channels.cache.get(interaction.channel_id);
+                const member = guild.members.cache.get(interaction.member.user.id);
                 interaction.data?.options?.forEach((v) => args.push(v.value))
 
                 const message = {
-                    member: interaction.member,
-                    author: interaction.member.user,
+                    member: member,
+                    author: member.user,
                     client: this.client,
                     guild: guild,
                     channel: channel,
                     interaction: interaction,
                     content: `/${interaction.data.name} ${args.join(" ")}`,
-                    member: interaction.member,
                     createdAt: Date.now()
                 };
 
@@ -150,14 +150,14 @@ class commandHandler extends EventEmitter {
                     channel: channel,
                     interaction: interaction,
                     args: args,
-                    member: interaction.member,
+                    member: member,
                     message: message,
                     handler: this
                 }
 
                 let allow = command.permissions ? command.permissions.length === 0 : true;
 
-                command.permissions?.forEach((v) => { if (interaction.member.permissions.has(v)) allow = true });
+                command.permissions?.forEach((v) => { if (member.permissions.has(v)) allow = true });
 
                 if (!allow) {
                     if (typeof (command.error) === "function") {
