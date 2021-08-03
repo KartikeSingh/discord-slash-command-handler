@@ -261,7 +261,7 @@ class Handler extends EventEmitter {
 
     async handleEvents() {
         fs.readdirSync(this.options.eventFolder).filter((f) => f.endsWith(".js")).forEach((file) => {
-            client.on(`${file.substring(0, file.length - 3)}`, (a, b, c, d) => require(`${this.options.eventFolder}/${file}`)(client, a, b, c, d));
+            this.client.on(`${file.substring(0, file.length - 3)}`, (a, b, c, d) => require(`${this.options.eventFolder}/${file}`)(this.client, a, b, c, d));
         });
     }
 
