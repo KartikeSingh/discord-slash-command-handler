@@ -15,7 +15,7 @@ class Handler extends EventEmitter {
     constructor(client, options) {
         super();
         if (!client) throw new Error("Invalid client was provided, only Discord.js V.12 is supporter");
-        if(client === true)return;
+        if (client === true) return;
 
         this.client = client;
 
@@ -23,6 +23,8 @@ class Handler extends EventEmitter {
         this.client.commands = new Map();
         this.client.commandAliases = new Map();
         this.timeouts = new Map();
+
+        if (fs.existsSync(this.options.eventFolder)) this.handleEvents();
 
         this.setCommands().then(() => {
             this.emit("commandsCreated", this.client.commands, this.client.commandAliases);
