@@ -19,11 +19,11 @@ npm i discord-slash-command-handler
 ```js
 // NOTE : only Discord.js V 12 is supported
 const client = new Discord.client(options);
-const Handler = require('discord-slash-command-handler');
+const Handler = require('discord-slash-command-handler').Handler;
 
 client.on('ready',()=>{
     // replace src/commands to the path to your commands folder.
-    const handler = new Handler(client,"src/commands",{guilds:["guild id"]});
+    const handler = new Handler(client, { guilds: ["guild id"], commandFolder:"/commands" } );
 
     console.log("bot is up");
 });
@@ -35,11 +35,18 @@ client.login(token);
 
 ```js
 const client = new Discord.client(options);
-const Handler = require('discord-slash-command-handler');
+const Handler = require('discord-slash-command-handler').Handler;
 
 client.on('ready',()=>{
     // replace src/commands to the path to your commands folder.
-    const handler = new Handler(client,"src/commands", {
+    const handler = new Handler(client, {
+        // Locations of folder should be provided with respect to the main file
+        // Location of the command folder
+        commandFolder:"/commands"
+
+        // Location of the event folder
+        eventFolder:"/events"
+
         // Guild ID(s) where you want to enable slash commands (if slash command isn't global)
         slashGuilds:["guild id"], 
 
