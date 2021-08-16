@@ -17,8 +17,7 @@ class commandOptions {
         this.description = description;
         this.type = type || 3;
         this.required = required || false;
-        this.choices = choices || undefined;
-
+        this.choices = choices || [];
     }
 }
 

@@ -38,21 +38,22 @@ class Handler extends EventEmitter {
 
     async setCommands() {
         return new Promise(async (resolve, reject) => {
+            let command;
             try {
-                const commands = fs.readdirSync(this.options.commandFolder)?.filter(file => file.endsWith(".js"));
+                let commands = fs.readdirSync(this.options.commandFolder) ? fs.readdirSync(this.options.commandFolder).filter(file => file.endsWith(".js")) : [], i;
 
-                if (commands?.length < 1) reject("no commands");
+                if (commands.length < 1) reject("no commands");
 
                 let _commands = 0, _slashCommands = 0, _normalCommands = 0;
 
-                for (let i = 0; i < commands.length; i++) {
-                    const command = require(`${this.options.commandFolder}/${commands[i]}`);
+                for (i = 0; i < commands.length; i++) {
+                    command = require(`${this.options.commandFolder}/${commands[i]}`);
 
                     if (!command.name || !command.run) continue;
 
                     this.client.commands.set(command.name, command);
                     command.name = command.name.replace(/ /g, "-").toLowerCase();
-                    command.aliases?.forEach((v) => this.client.commandAliases.set(v, command.name));
+                    command.aliases ? command.aliases.forEach((v) => this.client.commandAliases.set(v, command.name)) : null;
 
                     _commands++;
 
@@ -65,8 +66,10 @@ class Handler extends EventEmitter {
                         if ((!command.options || command.options.length === 0) && command.args) {
                             command.options = getOptions(command.args, command.argsDescription, command.argsType);
                         } else {
-                            for (let i = 0; i < command.options?.length; i++) {
-                                command.options[i].type = getType(command.options[i].type);
+                            if (command.options && command.options.length > 0) {
+                                for (let i = 0; i < command.options.length; i++) {
+                                    command.options[i].type = getType(command.options[i].type);
+                                }
                             }
                         }
 
@@ -78,7 +81,7 @@ class Handler extends EventEmitter {
 
                         const app = this.client.api.applications(this.client.user.id);
 
-                        if (this.slashGuilds?.length > 0 && command.global !== true) {
+                        if (this.options.slashGuilds.length > 0 && command.global !== true) {
                             app.guilds(this.slashGuilds);
                         }
 
@@ -93,7 +96,8 @@ class Handler extends EventEmitter {
                 console.log(`[Discord-Slash-Command-Handler] : Added ${_commands} Commands, out of which ${_slashCommands} are slash commands and ${_normalCommands} are normal commands\n\nGuild Slash commands will start working in ${this.options.slashGuilds.length} minutes or less\nGlobal Slash commands will start working after 1 hour`);
                 resolve("done")
             } catch (e) {
-                reject(e);
+                reject(e)
+                // reject(`${command ? `In ${command.name} :` : ""}\n${e}`);
             }
         })
     }
@@ -107,13 +111,14 @@ class Handler extends EventEmitter {
 
                 if (!command) return;
 
-                if (command.ownerOnly && !this.options.owners?.includes(interaction.member.user.id)) return this.replyToInteraction(interaction, this.options.notOwnerReply || _options.notOwnerReply);
+                if (command.ownerOnly && !this.options.owners.includes(interaction.member.user.id)) return this.replyToInteraction(interaction, this.options.notOwnerReply || _options.notOwnerReply);
 
                 if (this.timeouts.get(`${interaction.member.user.id}_${interaction.data.name}`)) return this.replyToInteraction(interaction, this.options.timeoutMessage || options.timeoutMessage);
 
                 const args = [], guild = this.client.guilds.cache.get(interaction.guild_id), channel = this.client.channels.cache.get(interaction.channel_id);
                 const member = guild.members.cache.get(interaction.member.user.id);
-                interaction.data?.options?.forEach((v) => args.push(v.value))
+
+                if (interaction.data.options && interaction.data.options.length > 0) interaction.data.options.forEach((v) => args.push(v.value))
 
                 const message = {
                     member: member,
@@ -139,7 +144,7 @@ class Handler extends EventEmitter {
 
                 let allow = command.permissions ? command.permissions.length === 0 : true;
 
-                command.permissions?.forEach((v) => { if (member.permissions.has(v)) allow = true });
+                if (command.permissions) command.permissions.forEach((v) => { if (member.permissions.has(v)) allow = true });
 
                 if (!allow) {
                     if (typeof (command.error) === "function") {
@@ -178,7 +183,7 @@ class Handler extends EventEmitter {
             try {
                 if (message.author.bot || !message.content.toLowerCase().startsWith(this.options.prefix)) return;
 
-                const args = message.content.slice(this.options.prefix.length).trim().split(/ +/g);
+                const args = message.content.slice(this.options.prefix.length).trim().split(/ +/g) || [];
                 let cmd = args.shift().toLowerCase();
 
                 if (cmd.length == 0) return;
@@ -187,8 +192,9 @@ class Handler extends EventEmitter {
 
                 if (!command || command.slash === true) return;
 
-                if (command.ownerOnly && !this.options.owners?.includes(message.author.id)) return message.reply(this.options.notOwnerReply || _options.notOwnerReply);
+                if (command.ownerOnly && !this.options.owners.includes(message.author.id)) return message.reply(this.options.notOwnerReply || _options.notOwnerReply);
 
+                if (command.dm === "only" && message.guild) return;
                 if (command.dm !== true && !message.guild) return;
 
                 if (this.timeouts.has(`${message.author.id}_${command.name}`)) {
@@ -198,9 +204,9 @@ class Handler extends EventEmitter {
                     return;
                 }
 
-                const reqArgs = command.args ? getOptions(command.args)?.filter((v) => v.required === true) || [] : command.options?.filter(v => v.required === true);
+                const reqArgs = command.args ? getOptions(command.args).filter((v) => v.required === true) || [] : command.options ? command.options.filter(v => v.required === true) : [];
 
-                if (args?.length < reqArgs?.length) {
+                if (args.length < reqArgs.length) {
                     if (typeof (command.error) === "function") {
                         command.error("lessArguments", command, message)
                         this.emit("lessArguments", command, message)
@@ -213,7 +219,7 @@ class Handler extends EventEmitter {
 
                 let allow = command.permissions && message.guild ? command.permissions.length === 0 : true;
 
-                if (message.guild) command.permissions?.forEach((v) => { if (message.member.permissions.has(v)) allow = true });
+                if (message.guild) if (command.permissions) command.permissions.forEach((v) => { if (message.member.permissions.has(v)) allow = true });
 
                 if (!allow) {
                     if (typeof (command.error) === "function") {

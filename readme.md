@@ -175,6 +175,43 @@ handler.on('exception',(commands,message,error)=>{
 
 # How to define command
 
+Advanced Method
+```js
+const Command = require("discord-slash-command-handler").Command;
+
+class commandName extends Command {
+     /**
+     * The list of paramters
+     * @param {String} name The name of the command
+     * @param {String} description The description of the command
+     * @param {Array<String>} aliases The aliases of the command
+     * @param {String} category The catgory Command belongs to
+     * @param {"true" | "false" | "both"} slash Wether the command is an slash command or normal or both
+     * @param {Boolean} global Wether the SLASH command works globally
+     * @param {Boolean} ownerOnly Wether the command can only be accessed by the owner of the client
+     * @param {Number} timeout The cooldown for the command in milliseconds
+     * @param {String} args The arguments for a command
+     * @param {String} argsType The argument type used for slash command
+     * @param {String} argsDescription The argument description used for slash command
+     * @param {Array<Options>} options The array of options for slash commands
+     */
+    constructor() {
+        super("commandName", "Command Description", ["An Aliases"], "Cool Category", "true", false, false, 5000, "<haha>", "", "", []);
+    }
+
+    async run(commandData) {
+        // Do your thing
+    }
+
+    // Optional
+    error:async (errorType, command, message, error)=>{
+        // Handle the errors
+    })
+}
+module.exports = new test();
+```
+
+Basic Method
 ```js
 file name : help.js
 
@@ -214,7 +251,7 @@ module.exports = {
         {
             name:"name of argument",
             description:"description of the argument",
-            require:true/false,
+            require:true or false,
             type:"string"
         }
     ],
