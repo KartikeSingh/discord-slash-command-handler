@@ -30,7 +30,7 @@ class command {
         this.ownerOnly = ownerOnly;
         this.timeout = timeout;
 
-        if (options) this.options = options;
+        if (options && options.length > 0) this.options = options;
         else options = getOptions(args, argsDescription, argsType);
 
         args = "";

@@ -204,8 +204,8 @@ class Handler extends EventEmitter {
                     return;
                 }
 
-                const reqArgs = command.args ? getOptions(command.args).filter((v) => v.required === true) || [] : command.options ? command.options.filter(v => v.required === true) : [];
-
+                const reqArgs = command.args ? getOptions(command.args).filter((v) => v.required === true) || [] : command.options ? command.options.filter(v => v.required === true) : [];0
+0
                 if (args.length < reqArgs.length) {
                     if (typeof (command.error) === "function") {
                         command.error("lessArguments", command, message)
