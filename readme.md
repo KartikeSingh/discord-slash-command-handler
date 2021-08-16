@@ -208,7 +208,7 @@ class commandName extends Command {
         // Handle the errors
     })
 }
-module.exports = new test();
+module.exports = new commandName();
 ```
 
 Basic Method
