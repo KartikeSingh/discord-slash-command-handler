@@ -1,6 +1,6 @@
 {
   "name": "discord-slash-command-handler",
-  "version": "0.1.1-1",
+  "version": "0.1.1-2",
   "description": "an packaged Command handler for discord slash commands",
   "main": "src/index.js",
   "scripts": {
