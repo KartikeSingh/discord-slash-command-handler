@@ -14,6 +14,8 @@ npm i discord-slash-command-handler
 # Example bot source code
 [here](https://github.com/KartikeSingh/discord-slash-command-bot)
 
+## We supports discord.js@13.x not below
+
 # Basic handler example
 
 ```js
