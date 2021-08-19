@@ -2,22 +2,28 @@ const { EventEmitter } = require('events');
 const Options = require('./options');
 const fs = require("fs")
 const ms = require('ms');
-
+const Discord = require('discord.js');
+const { REST } = require('@discordjs/rest');
+const { Routes } = require('discord-api-types/v9');
 
 const { getOptions, getType } = require('../utility');
 
 class Handler extends EventEmitter {
+    #slashEventName;
+    #slashEvent;
     /**
      * Discord slash command handler ( normal commands also works )
-     * @param {Client} client Provide your discord client
+     * @param {Discord.Client} client Provide your discord client
      * @param {Options} options the handler's options
      */
     constructor(client, options) {
         super();
-        if (!client) throw new Error("Invalid client was provided, only Discord.js V.12 is supporter");
+        if (!client || !client.application) throw new Error("Invalid client was provided, only Discord.js V.13 is supporter");
         if (client === true) return;
 
         this.client = client;
+        this.#slashEventName = this.client.application ? "interactionCreate" : "INTERACTION_CREATE";
+        this.#slashEvent = this.client.application ? this.client.on : this.client.ws.on;
 
         this.options = new Options(options);
         this.client.commands = new Map();
@@ -51,8 +57,8 @@ class Handler extends EventEmitter {
 
                     if (!command.name || !command.run) continue;
 
-                    this.client.commands.set(command.name, command);
                     command.name = command.name.replace(/ /g, "-").toLowerCase();
+                    this.client.commands.set(command.name, command);
                     command.aliases ? command.aliases.forEach((v) => this.client.commandAliases.set(v, command.name)) : null;
 
                     _commands++;
@@ -77,17 +83,29 @@ class Handler extends EventEmitter {
                             name: command.name,
                             description: command.description,
                             options: command.options || [],
+                            type: 1,
                         }
 
-                        const app = this.client.api.applications(this.client.user.id);
+                        if (!this.client.application) {
+                            const app = this.client.api.applications(this.client.user.id);
 
-                        if (this.options.slashGuilds.length > 0 && command.global !== true) {
-                            app.guilds(this.slashGuilds);
+                            if (this.options.slashGuilds.length > 0 && command.global !== true) {
+                                app.guilds(this.slashGuilds);
+                            }
+
+                            app.commands.post({
+                                data: command_data,
+                            })
+                        } else {
+                            if (command.global) this.client.application.commands.create(command_data);
+                            else {
+                                const rest = new REST({ version: '9' }).setToken(this.client.token);
+
+                                this.options.slashGuilds.forEach(async v => {
+                                    await rest.put(Routes.applicationGuildCommands(this.client.user.id, v), { body: [command_data] })
+                                })
+                            }
                         }
-
-                        app.commands.post({
-                            data: command_data,
-                        })
 
                         _slashCommands++;
                     }
@@ -103,22 +121,22 @@ class Handler extends EventEmitter {
     }
 
     async handleSlashCommands() {
-        this.client.ws.on('INTERACTION_CREATE', async (interaction) => {
+        this.client.on("interactionCreate", async (interaction) => {
             let command;
             try {
-
-                command = this.client.commands.get(interaction.data.name);
+                command = this.client.commands.get(interaction.commandName);
 
                 if (!command) return;
 
                 if (command.ownerOnly && !this.options.owners.includes(interaction.member.user.id)) return this.replyToInteraction(interaction, this.options.notOwnerReply || _options.notOwnerReply);
 
-                if (this.timeouts.get(`${interaction.member.user.id}_${interaction.data.name}`)) return this.replyToInteraction(interaction, this.options.timeoutMessage || options.timeoutMessage);
+                if (this.timeouts.get(`${interaction.member.user.id}_${interaction.commandMame}`)) return this.replyToInteraction(interaction, this.options.timeoutMessage || options.timeoutMessage);
 
-                const args = [], guild = this.client.guilds.cache.get(interaction.guild_id), channel = this.client.channels.cache.get(interaction.channel_id);
+                const args = [], guild = this.client.guilds.cache.get(interaction.guildId);
+                let channel = guild.channels.cache.get(interaction.channelId);
                 const member = guild.members.cache.get(interaction.member.user.id);
 
-                if (interaction.data.options && interaction.data.options.length > 0) interaction.data.options.forEach((v) => args.push(v.value))
+                if (interaction.options._hoistedOptions && interaction.options._hoistedOptions.length > 0) interaction.options._hoistedOptions.forEach((v) => args.push(v.value))
 
                 const message = {
                     member: member,
@@ -127,7 +145,7 @@ class Handler extends EventEmitter {
                     guild: guild,
                     channel: channel,
                     interaction: interaction,
-                    content: `/${interaction.data.name} ${args.join(" ")}`,
+                    content: `/${interaction.commandName} ${args.join(" ")}`,
                     createdAt: Date.now()
                 };
 
@@ -192,26 +210,26 @@ class Handler extends EventEmitter {
 
                 if (!command || command.slash === true) return;
 
-                if (command.ownerOnly && !this.options.owners.includes(message.author.id)) return message.reply(this.options.notOwnerReply || _options.notOwnerReply);
+                if (command.ownerOnly && !this.options.owners.includes(message.author.id)) return message.reply({ content: this.options.notOwnerReply || _options.notOwnerReply });
 
                 if (command.dm === "only" && message.guild) return;
                 if (command.dm !== true && !message.guild) return;
 
                 if (this.timeouts.has(`${message.author.id}_${command.name}`)) {
-                    if (this.options.handleTimeout !== false) message.reply(this.options.timeoutMessage || _options.timeoutMessage);
+                    if (this.options.handleTimeout !== false) message.reply({ content: this.options.timeoutMessage || _options.timeoutMessage });
                     this.emit("timeout", command, message)
                     if (typeof (command.error) === "function") command.error("timeout", command, message)
                     return;
                 }
 
-                const reqArgs = command.args ? getOptions(command.args).filter((v) => v.required === true) || [] : command.options ? command.options.filter(v => v.required === true) : [];0
-0
+                const reqArgs = command.args ? getOptions(command.args).filter((v) => v.required === true) || [] : command.options ? command.options.filter(v => v.required === true) : []; 0
+                0
                 if (args.length < reqArgs.length) {
                     if (typeof (command.error) === "function") {
                         command.error("lessArguments", command, message)
                         this.emit("lessArguments", command, message)
                     } else {
-                        message.reply(`Invalid Syntax corrected syntax is : \`${this.options.prefix}${command.name} ${command.args || command.options.reduce((container, next) => { return container + " " + next.name })}\``);
+                        message.reply({ content: `Invalid Syntax corrected syntax is : \`${this.options.prefix}${command.name} ${command.args || command.options.reduce((container, next) => { return container + " " + next.name })}\`` });
                         this.emit("lessArguments", command, message)
                     }
                     return;
@@ -226,7 +244,7 @@ class Handler extends EventEmitter {
                         command.error("noPermission", command, message);
                         this.emit("noPermission", command, message)
                     } else {
-                        message.reply(this.options.permissionReply || _options.permissionReply);
+                        message.reply({ content: this.options.permissionReply || _options.permissionReply });
                         this.emit("noPermission", command, message)
                     }
                     return;
