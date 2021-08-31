@@ -18,8 +18,8 @@ class Handler extends EventEmitter {
      */
     constructor(client, options) {
         super();
-        if (!client || !client.application) throw new Error("Invalid client was provided, only Discord.js V.13 is supporter");
         if (client === true) return;
+        if (!client || !client.application) throw new Error("Invalid client was provided, only Discord.js V.13 is supporter");
 
         this.client = client;
         this.#slashEventName = this.client.application ? "interactionCreate" : "INTERACTION_CREATE";
@@ -130,7 +130,19 @@ class Handler extends EventEmitter {
 
                 if (command.ownerOnly && !this.options.owners.includes(interaction.member.user.id)) return this.replyToInteraction(interaction, this.options.notOwnerReply || _options.notOwnerReply);
 
-                if (this.timeouts.get(`${interaction.member.user.id}_${interaction.commandMame}`)) return this.replyToInteraction(interaction, this.options.timeoutMessage || options.timeoutMessage);
+                if (this.timeouts.has(`${interaction.user.id}_${command.name}`)) {
+                    if (typeof (command.error) === "function") {
+                        command.error("timeout", command, message)
+                    } else {
+                        let reply = this.options.timeoutMessage.replace(/{mention}/g, interaction.user.toString());
+                        reply = reply.replace(/{remaining}/g, ms((this.timeouts.get(`${interaction.user.id}_${command.name}`) + ms(command.timeout)) - Date.now()))
+                        reply = reply.replace(/{command}/g, command.name)
+
+                        if (this.options.handleTimeout !== false) this.replyToInteraction(interaction, reply)
+                        this.emit("timeout", command, message);
+                    }
+                    return;
+                }
 
                 const args = [], guild = this.client.guilds.cache.get(interaction.guildId);
                 let channel = guild.channels.cache.get(interaction.channelId);
@@ -168,7 +180,9 @@ class Handler extends EventEmitter {
                     if (typeof (command.error) === "function") {
                         command.error("noPermissions", command, message);
                     } else {
-                        await this.replyToInteraction(interaction, this.options.permissionReply || _options.permissionReply);
+                        let reply = this.options.permissionReply.replace(/{mention}/g, interaction.user.toString());
+                        reply = reply.replace(/{command}/g, command.name)
+                        await this.replyToInteraction(interaction, reply);
                     }
                     return;
                 }
@@ -178,7 +192,7 @@ class Handler extends EventEmitter {
                 const timeout = (isNaN(command.timeout) && command.timeout) ? ms(command.timeout || " ") : command.timeout || (isNaN(command.cooldown) && command.cooldown) ? ms(command.cooldown || " ") : command.cooldown;
 
                 if (timeout && this.options.timeouts === true) {
-                    this.timeouts.set(`${interaction.member.user.id}_${interaction.data.name}`);
+                    this.timeouts.set(`${interaction.member.user.id}_${interaction.data.name}`, Date.now());
                     setTimeout(() => this.timeouts.delete(`${interaction.member.user.id}_${interaction.data.name}`), timeout)
                 }
 
@@ -196,9 +210,10 @@ class Handler extends EventEmitter {
     }
 
     async handleNormalCommands() {
-        this.client.on('message', async (message) => {
+        this.client.on('messageCreate', async (message) => {
             let command;
             try {
+                console.log("hello");
                 if (message.author.bot || !message.content.toLowerCase().startsWith(this.options.prefix)) return;
 
                 const args = message.content.slice(this.options.prefix.length).trim().split(/ +/g) || [];
@@ -211,19 +226,26 @@ class Handler extends EventEmitter {
                 if (!command || command.slash === true) return;
 
                 if (command.ownerOnly && !this.options.owners.includes(message.author.id)) return message.reply({ content: this.options.notOwnerReply || _options.notOwnerReply });
-
+                console.log(1);
                 if (command.dm === "only" && message.guild) return;
                 if (command.dm !== true && !message.guild) return;
 
                 if (this.timeouts.has(`${message.author.id}_${command.name}`)) {
-                    if (this.options.handleTimeout !== false) message.reply({ content: this.options.timeoutMessage || _options.timeoutMessage });
-                    this.emit("timeout", command, message)
-                    if (typeof (command.error) === "function") command.error("timeout", command, message)
-                    return;
+                    if (typeof (command.error) === "function") {
+                        command.error("timeout", command, message)
+                    } else {
+                        let reply = this.options.timeoutMessage.replace(/{mention}/g, message.author.toString());
+                        reply = reply.replace(/{remaining}/g, ms((this.timeouts.get(`${message.author.id}_${command.name}`) + ms(command.timeout)) - Date.now()))
+                        reply = reply.replace(/{command}/g, command.name)
+
+                        if (this.options.handleTimeout !== false) message.reply({ content: reply });
+                        this.emit("timeout", command, message);
+                    }
+                    return console.log("tmeeme");
                 }
 
                 const reqArgs = command.args ? getOptions(command.args).filter((v) => v.required === true) || [] : command.options ? command.options.filter(v => v.required === true) : []; 0
-                0
+
                 if (args.length < reqArgs.length) {
                     if (typeof (command.error) === "function") {
                         command.error("lessArguments", command, message)
@@ -234,6 +256,7 @@ class Handler extends EventEmitter {
                     }
                     return;
                 }
+                console.log(1);
 
                 let allow = command.permissions && message.guild ? command.permissions.length === 0 : true;
 
@@ -244,11 +267,16 @@ class Handler extends EventEmitter {
                         command.error("noPermission", command, message);
                         this.emit("noPermission", command, message)
                     } else {
-                        message.reply({ content: this.options.permissionReply || _options.permissionReply });
+
+                        let reply = this.options.permissionReply.replace(/{mention}/g, message.author.toString());
+                        reply = reply.replace(/{command}/g, command.name);
+
+                        message.reply({ content: reply });
                         this.emit("noPermission", command, message)
                     }
                     return;
                 }
+                console.log(1);
 
                 const command_data = {
                     client: this.client,
@@ -269,7 +297,7 @@ class Handler extends EventEmitter {
                 }
 
                 if (timeout && this.options.timeouts === true) {
-                    this.timeouts.set(`${message.author.id}_${command.name}`);
+                    this.timeouts.set(`${message.author.id}_${command.name}`, Date.now());
                     setTimeout(() => this.timeouts.delete(`${message.author.id}_${command.name}`), timeout)
                 }
 
