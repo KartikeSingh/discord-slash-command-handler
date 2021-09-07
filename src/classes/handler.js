@@ -111,6 +111,9 @@ class Handler extends EventEmitter {
 
                 if (!command) return;
 
+                if (command.dm === "only" && message.guild) return;
+                if (command.dm !== true && !message.guild) return;
+
                 if (command.ownerOnly && !this.options.owners.includes(interaction.user.id)) {
                     if (typeof (command.error) === "function") command.error("notOwner", command, message);
                     else if (this.listeners("notOwner").length > 0) this.emit("notOwner", command, message);

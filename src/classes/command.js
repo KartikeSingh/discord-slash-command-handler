@@ -12,6 +12,7 @@ class command {
      * @param {"true" | "false" | "both"} slash Wether the command is an slash command
      * @param {Boolean} global Wether the SLASH command works globally
      * @param {Boolean} ownerOnly Wether the command can only be accessed by the owner of the client
+     * @param {Boolean} dm Wether the command can only be accessed by the owner of the client
      * @param {Number} timeout The cooldown for the command in milliseconds
      * @param {String} args The arguments for a command
      * @param {String} argsType The argument type used for slash command

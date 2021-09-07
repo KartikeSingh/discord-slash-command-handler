@@ -6,15 +6,17 @@ npm i discord-slash-command-handler
 
 # Why use our package ?
 
-* Fast and secure
-* Easy to use
-* Active support on discord
-* Easily convert normal commands to slash commands
+* Fast and secure.
+* Easy to use.
+* Active support on discord.
+* Easily convert normal commands to slash commands.
+* Supports Database for timeouts.
+* Advanced methods to handle commands and errors ( like timeouts, less arguments etc ) and can be automated too.
+* #### We supports discord.js@13 and above
 
 # Example bot source code
 [here](https://github.com/KartikeSingh/discord-slash-command-bot)
 
-## We supports discord.js@13.x not below
 
 # Basic handler example
 
@@ -52,6 +54,12 @@ client.on('ready',()=>{
         // Guild ID(s) where you want to enable slash commands (if slash command isn't global)
         slashGuilds:["guild id"], 
 
+        // Add MONGO URI for timeouts
+        mongoURI:"some_mongo_uri",
+
+        // Make all commands slash commands
+        allSlash:true,
+
         // User ID(s) , these users will be considered as bot owners
         owners:["user id"], 
         
@@ -68,9 +76,8 @@ client.on('ready',()=>{
          */
 
         prefix: "k!", // Bot's prefix
-        timeouts: true, // If you want to add timeouts in commands
-        handleTimeout: true, // if you want us to handle timeouts, false if not
-
+        timeout: true, // If you want to add timeouts in commands
+        
         // reply to send when user don't have enough permissions to use the command
         permissionReply: "You don't have enough permissions to use this command",   
 
@@ -118,7 +125,7 @@ bot.on('ready',()=>{
 
 ```js
 // this event is invoked when Commands are added to client / Commands are loaded
-handler.on('commandsCreated',(commands,commandAliases)=>{
+handler.on('commandsCreated',(commands ,commandAliases)=>{
      /*
       * commands : the collection of all the bot commands
       * commandAliases : the collection of all the bot command's aliases
@@ -126,7 +133,7 @@ handler.on('commandsCreated',(commands,commandAliases)=>{
 });
 
 // this event is invoked when a user used a slash command and handleSlash is 'both'
-handler.on('slashCommand',(commands,command_data)=>{
+handler.on('slashCommand',(command ,command_data)=>{
      /*
       * commands : the command used
       * command_data : the command data ( for more info read data types at bottom )
@@ -134,7 +141,7 @@ handler.on('slashCommand',(commands,command_data)=>{
 });
 
 // this event is invoked when a user used a normal command and handleNormal is 'both'
-handler.on('normalCommand',(commands,command_data)=>{
+handler.on('normalCommand',(command ,command_data)=>{
      /*
       * commands : the command used
       * command_data : the command data ( for more info read data types at bottom )
@@ -142,7 +149,15 @@ handler.on('normalCommand',(commands,command_data)=>{
 });
 
 // This event is invoked when user don't provides enough arguments in a command
-handler.on('lessArguments',(commands,message)=>{
+handler.on('lessArguments',(command ,message)=>{
+     /*
+      * commands : the command used
+      * message : the Discord message object
+      */
+});
+
+// This event is invoked when command is owner only but user is not an owner
+handler.on('notOwner',(command ,message)=>{
      /*
       * commands : the command used
       * message : the Discord message object
@@ -150,7 +165,7 @@ handler.on('lessArguments',(commands,message)=>{
 });
 
 // This event is invoked when user don't have enough permissions to use a command
-handler.on('noPermission',(commands,message)=>{
+handler.on('noPermission',(command ,message)=>{
      /*
       * commands : the command used
       * message : the Discord message object
@@ -158,7 +173,7 @@ handler.on('noPermission',(commands,message)=>{
 });
 
     // This event is invoked when user is on a timeout to use a command
-handler.on('timeout',(commands,message)=>{
+handler.on('timeout',(command ,message)=>{
      /*
       * commands : the command used
       * message : the Discord message object
@@ -166,7 +181,7 @@ handler.on('timeout',(commands,message)=>{
 });
 
 // This event is invoked when an unknown error occurs while running a command
-handler.on('exception',(commands,message,error)=>{
+handler.on('exception',(command ,message,error)=>{
      /*
       * commands : the command used
       * message : the Discord message object
@@ -232,6 +247,8 @@ module.exports = {
 
     ownerOnly:false, // false => work for all users, true => works only for bot owners
     
+    dm:false, // false => Guild Only, true => Both Guild And DM, "only" => DM Only
+
     timeout:10000 | '10s', // the timeout on the command
     
     args:"< command category > [ command name ]", // Command arguments, <> for required arguments, [] for optional arguments ( please provide required arguments before optional arguments )
