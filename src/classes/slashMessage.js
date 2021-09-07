@@ -1,15 +1,17 @@
-class slashMessage {
-    constructor(options) {
-        const { member, author, client, guild, channel, interaction, content, createdAt } = options;
+const { Collection } = require("discord.js");
 
-        this.member = member;
-        this.author = author;
-        this.client = client;
-        this.guild = guild;
-        this.channel = channel;
-        this.interaction = interaction;
-        this.content = content;
-        this.createdAt = createdAt;
+
+class slashMessage {
+    constructor() {
+        this.author; // The command User
+        this.content; // The message content
+        this.mentions = { // All the mentions
+            channels: new Collection(),
+            members: new Collection(),
+            users: new Collection(),
+            roles: new Collection(),
+        }
+        // And all properties for CommandInteraction
     }
 }
 

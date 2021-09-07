@@ -1,16 +1,14 @@
-const { EventEmitter } = require('events');
 const Options = require('./options');
 const fs = require("fs")
 const ms = require('ms');
 const Discord = require('discord.js');
+const Timeout = require('./timeout');
+const { EventEmitter } = require('events');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-
-const { getOptions, getType } = require('../utility');
+const { getOptions, getType, modifyInteraction } = require('../utility');
 
 class Handler extends EventEmitter {
-    #slashEventName;
-    #slashEvent;
     /**
      * Discord slash command handler ( normal commands also works )
      * @param {Discord.Client} client Provide your discord client
@@ -19,16 +17,13 @@ class Handler extends EventEmitter {
     constructor(client, options) {
         super();
         if (client === true) return;
-        if (!client || !client.application) throw new Error("Invalid client was provided, only Discord.js V.13 is supporter");
+        if (!client || !client.application) throw new Error("Invalid client was provided, Note Client should be provided in ready event");
 
         this.client = client;
-        this.#slashEventName = this.client.application ? "interactionCreate" : "INTERACTION_CREATE";
-        this.#slashEvent = this.client.application ? this.client.on : this.client.ws.on;
-
         this.options = new Options(options);
+        this.Timeout = new Timeout(this.client, this.options.mongoURI || "no_uri");
         this.client.commands = new Map();
         this.client.commandAliases = new Map();
-        this.timeouts = new Map();
 
         if (fs.existsSync(this.options.eventFolder)) this.handleEvents();
 
@@ -64,112 +59,93 @@ class Handler extends EventEmitter {
                     _commands++;
 
                     if (command.slash !== true) _normalCommands++;
+                    if (command.slash !== true && command.slash !== "both" && this.options.allSlash !== true) continue;
 
-                    if (command.slash === true || command.slash === "both") {
+                    _slashCommands++;
 
-                        if (!command.description) throw new Error("Description is required in a command\n Description was not found in " + command.name)
+                    if (!command.description) throw new Error("Description is required in a command\n Description was not found in " + command.name)
 
-                        if ((!command.options || command.options.length === 0) && command.args) {
-                            command.options = getOptions(command.args, command.argsDescription, command.argsType);
-                        } else {
-                            if (command.options && command.options.length > 0) {
-                                for (let i = 0; i < command.options.length; i++) {
-                                    command.options[i].type = getType(command.options[i].type);
-                                }
-                            }
+                    if ((!command.options || command.options.length === 0) && command.args) command.options = getOptions(command.args, command.argsDescription, command.argsType);
+                    else if (command.options && command.options.length > 0) {
+                        for (let i = 0; i < command.options.length; i++) {
+                            command.options[i].type = getType(command.options[i].type);
+                            command.options[i].name = command.options[i].name?.trim()?.replace(/ /g, "-")
                         }
+                    }
 
-                        const command_data = {
-                            name: command.name,
-                            description: command.description,
-                            options: command.options || [],
-                            type: 1,
-                        }
+                    const command_data = {
+                        name: command.name,
+                        description: command.description,
+                        options: command.options || [],
+                        type: 1,
+                    }
 
-                        if (!this.client.application) {
-                            const app = this.client.api.applications(this.client.user.id);
+                    if (command.global) this.client.application.commands.create(command_data);
+                    else {
+                        const rest = new REST({ version: '9' }).setToken(this.client.token);
 
-                            if (this.options.slashGuilds.length > 0 && command.global !== true) {
-                                app.guilds(this.slashGuilds);
-                            }
-
-                            app.commands.post({
-                                data: command_data,
-                            })
-                        } else {
-                            if (command.global) this.client.application.commands.create(command_data);
-                            else {
-                                const rest = new REST({ version: '9' }).setToken(this.client.token);
-
-                                this.options.slashGuilds.forEach(async v => {
-                                    await rest.put(Routes.applicationGuildCommands(this.client.user.id, v), { body: [command_data] })
-                                })
-                            }
-                        }
-
-                        _slashCommands++;
+                        this.options.slashGuilds.forEach(async v => {
+                            await rest.put(Routes.applicationGuildCommands(this.client.user.id, v), { body: [command_data] })
+                        })
                     }
                 }
 
-                console.log(`[Discord-Slash-Command-Handler] : Added ${_commands} Commands, out of which ${_slashCommands} are slash commands and ${_normalCommands} are normal commands\n\nGuild Slash commands will start working in ${this.options.slashGuilds.length} minutes or less\nGlobal Slash commands will start working after 1 hour`);
+                console.log(`[ discord-Slash-Command-Handler ] : Added ${_commands} Commands, out of which ${_slashCommands} are slash commands and ${_normalCommands} are normal commands\n\nGuild Slash commands will start working in ${this.options.slashGuilds.length} minutes or less\nGlobal Slash commands will start working after 1 hour`);
                 resolve("done")
             } catch (e) {
                 reject(e)
-                // reject(`${command ? `In ${command.name} :` : ""}\n${e}`);
             }
         })
     }
 
     async handleSlashCommands() {
         this.client.on("interactionCreate", async (interaction) => {
+            if (!interaction.isCommand()) return;
+
             let command;
+            const guild = await this.client.guilds.cache.get(interaction.guildId).fetch(), member = guild.members.cache.get(interaction.user.id);
+
+            const message = modifyInteraction(this.client, interaction, guild);
             try {
                 command = this.client.commands.get(interaction.commandName);
 
                 if (!command) return;
 
-                if (command.ownerOnly && !this.options.owners.includes(interaction.member.user.id)) return this.replyToInteraction(interaction, this.options.notOwnerReply || _options.notOwnerReply);
+                if (command.ownerOnly && !this.options.owners.includes(interaction.user.id)) {
+                    if (typeof (command.error) === "function") command.error("notOwner", command, message);
+                    else if (this.listeners("notOwner").length > 0) this.emit("notOwner", command, message);
+                    else this.replyToInteraction(interaction, this.options.notOwnerReply);
 
-                if (this.timeouts.has(`${interaction.user.id}_${command.name}`)) {
-                    if (typeof (command.error) === "function") {
-                        command.error("timeout", command, message)
-                    } else {
-                        let reply = this.options.timeoutMessage.replace(/{mention}/g, interaction.user.toString());
-                        reply = reply.replace(/{remaining}/g, ms((this.timeouts.get(`${interaction.user.id}_${command.name}`) + ms(command.timeout)) - Date.now()))
-                        reply = reply.replace(/{command}/g, command.name)
-
-                        if (this.options.handleTimeout !== false) this.replyToInteraction(interaction, reply)
-                        this.emit("timeout", command, message);
-                    }
                     return;
                 }
 
-                const args = [], guild = this.client.guilds.cache.get(interaction.guildId);
-                let channel = guild.channels.cache.get(interaction.channelId);
-                const member = guild.members.cache.get(interaction.member.user.id);
+                const tm = await this.Timeout.getTimeout(interaction.user.id, interaction.commandName);
+
+                if (tm.at > Date.now()) {
+                    if (typeof (command.error) === "function") command.error("timeout", command, message)
+                    else if (this.listeners("timeout").length > 0) this.emit("timeout", command, message);
+                    else this.replyToInteraction(interaction, this.options.timeoutMessage.replace(/{remaining}/g, ms(tm.at - Date.now())).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name))
+
+                    return;
+                }
+
+                const args = [];
 
                 if (interaction.options._hoistedOptions && interaction.options._hoistedOptions.length > 0) interaction.options._hoistedOptions.forEach((v) => args.push(v.value))
 
-                const message = {
-                    member: member,
-                    author: member.user,
-                    client: this.client,
-                    guild: guild,
-                    channel: channel,
-                    interaction: interaction,
-                    content: `/${interaction.commandName} ${args.join(" ")}`,
-                    createdAt: Date.now()
-                };
-
+                const channel = await guild.channels.fetch(interaction.channelId, { cache: true, force: true })
                 const command_data = {
                     client: this.client,
-                    guild: guild,
-                    channel: channel,
-                    interaction: interaction,
-                    args: args,
-                    member: member,
-                    message: message,
-                    handler: this
+                    guild,
+                    channel,
+                    interaction,
+                    args,
+                    member,
+                    user: member.user,
+                    message,
+                    handler: this,
+                    subCommand: interaction.options._subcommand,
+                    subCommandGroup: interaction.options._group,
                 }
 
                 let allow = command.permissions ? command.permissions.length === 0 : true;
@@ -177,34 +153,32 @@ class Handler extends EventEmitter {
                 if (command.permissions) command.permissions.forEach((v) => { if (member.permissions.has(v)) allow = true });
 
                 if (!allow) {
-                    if (typeof (command.error) === "function") {
-                        command.error("noPermissions", command, message);
-                    } else {
-                        let reply = this.options.permissionReply.replace(/{mention}/g, interaction.user.toString());
-                        reply = reply.replace(/{command}/g, command.name)
-                        await this.replyToInteraction(interaction, reply);
-                    }
+                    if (typeof (command.error) === "function") command.error("noPermissions", command, message);
+                    else if (this.listeners("noPermissions").length > 0) this.emit("noPermissions", command, message)
+                    else this.replyToInteraction(interaction, this.options.permissionReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
+
                     return;
                 }
 
-                await this.replyToInteraction(interaction, "command accepted");
+                this.replyToInteraction(interaction, "command accepted");
 
-                const timeout = (isNaN(command.timeout) && command.timeout) ? ms(command.timeout || " ") : command.timeout || (isNaN(command.cooldown) && command.cooldown) ? ms(command.cooldown || " ") : command.cooldown;
+                let timeout;
 
-                if (timeout && this.options.timeouts === true) {
-                    this.timeouts.set(`${interaction.member.user.id}_${interaction.data.name}`, Date.now());
-                    setTimeout(() => this.timeouts.delete(`${interaction.member.user.id}_${interaction.data.name}`), timeout)
+                if (command.timeout || command.cooldown) {
+                    if (typeof (command.timeout || command.cooldown) === "string") timeout = ms(command.timeout || command.cooldown)
+                    else timeout = command.timeout || command.cooldown;
                 }
+
+                if (timeout && this.options.timeout === true) this.Timeout.setTimeout(interaction.user.id, command.name, Date.now() + timeout);
 
                 if (this.options.handleSlash === true) command.run(command_data);
                 else this.emit("slashCommand", command, command_data);
             } catch (e) {
-                if (typeof (command.error) === "function") {
-                    command.error("exception", command, message, e);
-                    this.emit("exception", command, message, e);
-                } else {
-                    await this.replyToInteraction(interaction, this.options.errorReply || _options.errorReply);
-                }
+                if (typeof (command.error) === "function") command.error("exception", command, message, e);
+                else if (this.listeners("exception").length > 0) this.emit("exception", command, message, e);
+                else this.replyToInteraction(interaction, this.options.errorReply || _options.errorReply);
+
+                return;
             }
         })
     }
@@ -213,7 +187,6 @@ class Handler extends EventEmitter {
         this.client.on('messageCreate', async (message) => {
             let command;
             try {
-                console.log("hello");
                 if (message.author.bot || !message.content.toLowerCase().startsWith(this.options.prefix)) return;
 
                 const args = message.content.slice(this.options.prefix.length).trim().split(/ +/g) || [];
@@ -225,58 +198,48 @@ class Handler extends EventEmitter {
 
                 if (!command || command.slash === true) return;
 
-                if (command.ownerOnly && !this.options.owners.includes(message.author.id)) return message.reply({ content: this.options.notOwnerReply || _options.notOwnerReply });
-                console.log(1);
+                if (command.ownerOnly && !this.options.owners.includes(message.author.id)) {
+                    if (typeof (command.error) === "function") command.error("notOwner", command, message);
+                    else if (this.listeners("notOwner").length > 0) this.emit("notOwner", command, message);
+                    else this.replyToInteraction(interaction, this.options.notOwnerReply);
+
+                    return;
+                }
+
                 if (command.dm === "only" && message.guild) return;
                 if (command.dm !== true && !message.guild) return;
 
-                if (this.timeouts.has(`${message.author.id}_${command.name}`)) {
-                    if (typeof (command.error) === "function") {
-                        command.error("timeout", command, message)
-                    } else {
-                        let reply = this.options.timeoutMessage.replace(/{mention}/g, message.author.toString());
-                        reply = reply.replace(/{remaining}/g, ms((this.timeouts.get(`${message.author.id}_${command.name}`) + ms(command.timeout)) - Date.now()))
-                        reply = reply.replace(/{command}/g, command.name)
+                const tm = await this.Timeout.getTimeout(interaction.user.id, interaction.commandName);
 
-                        if (this.options.handleTimeout !== false) message.reply({ content: reply });
-                        this.emit("timeout", command, message);
-                    }
-                    return console.log("tmeeme");
+                if (tm.at > Date.now()) {
+                    if (typeof (command.error) === "function") command.error("timeout", command, message)
+                    else if (this.listeners("timeout").length > 0) this.emit("timeout", command, message);
+                    else this.replyToInteraction(interaction, this.options.timeoutMessage.replace(/{mention}/g, interaction.user.toString()).replace(/{remaining}/g, ms(tm.at - Date.now())).replace(/{command}/g, command.name))
+
+                    return;
                 }
 
                 const reqArgs = command.args ? getOptions(command.args).filter((v) => v.required === true) || [] : command.options ? command.options.filter(v => v.required === true) : []; 0
 
                 if (args.length < reqArgs.length) {
-                    if (typeof (command.error) === "function") {
-                        command.error("lessArguments", command, message)
-                        this.emit("lessArguments", command, message)
-                    } else {
-                        message.reply({ content: `Invalid Syntax corrected syntax is : \`${this.options.prefix}${command.name} ${command.args || command.options.reduce((container, next) => { return container + " " + next.name })}\`` });
-                        this.emit("lessArguments", command, message)
-                    }
+                    if (typeof (command.error) === "function") command.error("lessArguments", command, message)
+                    else if (this.listeners("lessArguments").length > 0) this.emit("lessArguments", command, message)
+                    else message.reply({ content: `Invalid Syntax corrected syntax is : \`${this.options.prefix}${command.name} ${command.args || command.options.reduce((container, next) => { return container + " " + next.name }) || " "}\`` });
+
                     return;
                 }
-                console.log(1);
 
                 let allow = command.permissions && message.guild ? command.permissions.length === 0 : true;
 
                 if (message.guild) if (command.permissions) command.permissions.forEach((v) => { if (message.member.permissions.has(v)) allow = true });
 
                 if (!allow) {
-                    if (typeof (command.error) === "function") {
-                        command.error("noPermission", command, message);
-                        this.emit("noPermission", command, message)
-                    } else {
+                    if (typeof (command.error) === "function") command.error("noPermissions", command, message);
+                    else if (this.listeners("noPermissions").length > 0) this.emit("noPermissions", command, message)
+                    else this.replyToInteraction(interaction, this.options.permissionReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
 
-                        let reply = this.options.permissionReply.replace(/{mention}/g, message.author.toString());
-                        reply = reply.replace(/{command}/g, command.name);
-
-                        message.reply({ content: reply });
-                        this.emit("noPermission", command, message)
-                    }
                     return;
                 }
-                console.log(1);
 
                 const command_data = {
                     client: this.client,
@@ -286,7 +249,8 @@ class Handler extends EventEmitter {
                     args: args,
                     member: message.member,
                     message: message,
-                    handler: this
+                    handler: this,
+                    user:message.author
                 }
 
                 let timeout;
@@ -296,16 +260,18 @@ class Handler extends EventEmitter {
                     else timeout = command.timeout || command.cooldown;
                 }
 
-                if (timeout && this.options.timeouts === true) {
-                    this.timeouts.set(`${message.author.id}_${command.name}`, Date.now());
-                    setTimeout(() => this.timeouts.delete(`${message.author.id}_${command.name}`), timeout)
+                if (timeout && this.options.timeout === true) {
+                    this.Timeout.setTimeout(message.author.id, command.name, Date.now() + timeout);
                 }
 
                 if (this.options.handleNormal === true) command.run(command_data);
                 else this.emit("normalCommand", command, command_data);
             } catch (e) {
-                this.emit("exception", command, message, e);
                 if (typeof (command.error) === "function") command.error("exception", command, message, e);
+                else if (this.listeners("exception").length > 0) this.emit("exception", command, message, e);
+                else message.reply(this.options.errorReply);
+
+                return;
             }
         })
 
@@ -329,7 +295,7 @@ class Handler extends EventEmitter {
                 }
             })
         } catch (e) {
-            console.log(`[Discord-Slash-Command-Handler] : ${e}`)
+            console.log(`[ discord-Slash-Command-Handler ] : ${e}`)
         }
     }
 
@@ -344,16 +310,24 @@ class Handler extends EventEmitter {
             this.setCommands()
                 .then((v) => {
                     res(this.client.commands, this.client.commandAliases)
-                    console.log("[discord-slash-command-handler] : Commands are reloaded")
+                    console.log("[ discord-slash-command-handler ] : Commands are reloaded")
                     this.emit("commandsCreated", this.client.commands, this.client.commandAliases)
                 })
                 .catch((e) => {
                     rej(e);
-                    console.log("[discord-slash-command-handler] : There was a error in reloading the commands")
+                    console.log("[ discord-slash-command-handler ] : There was a error in reloading the commands")
                 })
         })
     }
-}
 
+    /**
+     * 
+     * @param { "commandsCreated" | "slashCommand" | "normalCommand" | "lessArguments" | "noPermission" | "timeout" | "notOwner" | "exception"} event 
+     * @param {function} _function The callback function, for arguments check docs
+     */
+    on(event, _function) {
+        super.on(event, _function)
+    }
+}
 
 module.exports = Handler;
