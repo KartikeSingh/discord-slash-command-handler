@@ -8,6 +8,7 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { getOptions, getType, modifyInteraction } = require('../utility');
 
+Routes.applicationCommands()
 class Handler extends EventEmitter {
     /**
      * Discord slash command handler ( normal commands also works )
@@ -212,7 +213,7 @@ class Handler extends EventEmitter {
                 if (command.dm === "only" && message.guild) return;
                 if (command.dm !== true && !message.guild) return;
 
-                const tm = await this.Timeout.getTimeout(interaction.user.id, interaction.commandName);
+                const tm = await this.Timeout.getTimeout(message.author.id, command.name);
 
                 if (tm.at > Date.now()) {
                     if (typeof (command.error) === "function") command.error("timeout", command, message)
@@ -253,7 +254,7 @@ class Handler extends EventEmitter {
                     member: message.member,
                     message: message,
                     handler: this,
-                    user:message.author
+                    user: message.author
                 }
 
                 let timeout;
