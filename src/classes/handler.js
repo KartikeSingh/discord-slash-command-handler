@@ -1,4 +1,5 @@
 const Options = require('./options');
+const ARGS = require('./args');
 const fs = require("fs")
 const ms = require('ms');
 const Discord = require('discord.js');
@@ -133,9 +134,7 @@ class Handler extends EventEmitter {
                     return;
                 }
 
-                const args = [];
-
-                if (interaction.options._hoistedOptions && interaction.options._hoistedOptions.length > 0) interaction.options._hoistedOptions.forEach((v) => args.push(v.value))
+                const args = new ARGS(interaction?.options?._hoistedOptions || []);
 
                 const channel = await guild.channels.fetch(interaction.channelId, { cache: true, force: true })
                 const command_data = {
@@ -218,7 +217,7 @@ class Handler extends EventEmitter {
                 if (tm.at > Date.now()) {
                     if (typeof (command.error) === "function") command.error("timeout", command, message)
                     else if (this.listeners("timeout").length > 0) this.emit("timeout", command, message);
-                    else this.replyToInteraction(interaction, this.options.timeoutMessage.replace(/{mention}/g, interaction.user.toString()).replace(/{remaining}/g, ms(tm.at - Date.now())).replace(/{command}/g, command.name))
+                    else message.reply(this.options.timeoutMessage.replace(/{mention}/g, message.author.toString()).replace(/{remaining}/g, ms(tm.at - Date.now())).replace(/{command}/g, command.name))
 
                     return;
                 }
@@ -250,7 +249,7 @@ class Handler extends EventEmitter {
                     guild: message.guild,
                     channel: message.channel,
                     interaction: undefined,
-                    args: args,
+                    args: new ARGS(args),
                     member: message.member,
                     message: message,
                     handler: this,
