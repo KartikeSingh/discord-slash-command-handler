@@ -121,6 +121,19 @@ bot.on('ready',()=>{
 ...
 ```
 
+# Handle Arguments for Slash Commands
+```js
+run : async ({args}) => {
+    // Wanna get an specific argument of a slash command?
+    args.get("argument name goes here");
+    // argument name = the one specified in options.
+
+    // Other ways to get options
+    args[0] // index
+    args["some name"] // get argument from name
+}
+```
+
 # All available events
 
 ```js
