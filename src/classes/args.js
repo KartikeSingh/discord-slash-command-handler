@@ -12,7 +12,7 @@ class args extends Array {
 
         args.forEach(v => newArgs.push(v.value ? v.value : v));
 
-        super(newArgs);
+        super(newArgs.length === 0 ? undefined : newArgs);
 
         this.#collection = new Map();
         this.#array = newArgs;

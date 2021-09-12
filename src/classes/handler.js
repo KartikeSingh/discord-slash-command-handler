@@ -9,7 +9,6 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { getOptions, getType, modifyInteraction } = require('../utility');
 
-Routes.applicationCommands()
 class Handler extends EventEmitter {
     /**
      * Discord slash command handler ( normal commands also works )
@@ -41,7 +40,7 @@ class Handler extends EventEmitter {
 
     async setCommands() {
         return new Promise(async (resolve, reject) => {
-            let command;
+            let command, globalCommands = [], guildCommands = [];
             try {
                 let commands = fs.readdirSync(this.options.commandFolder) ? fs.readdirSync(this.options.commandFolder).filter(file => file.endsWith(".js")) : [], i;
 
@@ -82,20 +81,20 @@ class Handler extends EventEmitter {
                         type: 1,
                     }
 
-                    if (command.global) this.client.application.commands.create(command_data);
-                    else {
-                        const rest = new REST({ version: '9' }).setToken(this.client.token);
-
-                        this.options.slashGuilds.forEach(async v => {
-                            await rest.put(Routes.applicationGuildCommands(this.client.user.id, v), { body: [command_data] })
-                        })
-                    }
+                    if (command.global) globalCommands.push(command_data)
+                    else guildCommands.push(command_data);
                 }
+
+                const rest = new REST({ version: '9' }).setToken(this.client.token);
+
+                if (globalCommands.length > 0) rest.put(Routes.applicationCommands(this.client.user.id), { body: globalCommands })
+
+                if (this.options.slashGuilds.length > 0 && guildCommands.length > 0) this.options.slashGuilds.forEach(v => rest.put(Routes.applicationGuildCommands(this.client.user.id, v), { body: guildCommands }))
 
                 console.log(`[ discord-Slash-Command-Handler ] : Added ${_commands} Commands, out of which ${_slashCommands} are slash commands and ${_normalCommands} are normal commands\n\nGuild Slash commands will start working in ${this.options.slashGuilds.length} minutes or less\nGlobal Slash commands will start working after 1 hour`);
                 resolve("done")
             } catch (e) {
-                reject(e)
+                reject(e + `\nin command : ${command?.name || "none"}`)
             }
         })
     }
@@ -318,7 +317,8 @@ class Handler extends EventEmitter {
                 })
                 .catch((e) => {
                     rej(e);
-                    console.log("[ discord-slash-command-handler ] : There was a error in reloading the commands")
+                    console.log("[ discord-slash-command-handler ] : There was a error in reloading the commands");
+                    console.log(e);
                 })
         })
     }
