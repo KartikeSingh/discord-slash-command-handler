@@ -1,7 +1,7 @@
 const Options = require('./options');
 const ARGS = require('./args');
 const fs = require("fs")
-const ms = require('ms');
+const ms = require('ms-prettify');
 const Discord = require('discord.js');
 const Timeout = require('./timeout');
 const { EventEmitter } = require('events');
@@ -23,8 +23,8 @@ class Handler extends EventEmitter {
         this.client = client;
         this.options = new Options(options);
         this.Timeout = new Timeout(this.client, this.options.mongoURI || "no_uri");
-        this.client.commands = new Map();
-        this.client.commandAliases = new Map();
+        this.client.commands = new Discord.Collection();
+        this.client.commandAliases = new Discord.Collection();
 
         if (fs.existsSync(this.options.eventFolder)) this.handleEvents();
 
@@ -42,47 +42,60 @@ class Handler extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             let command, globalCommands = [], guildCommands = [];
             try {
-                let commands = fs.readdirSync(this.options.commandFolder) ? fs.readdirSync(this.options.commandFolder).filter(file => file.endsWith(".js")) : [], i;
+                let commands_ = fs.readdirSync(this.options.commandFolder)?.filter(file => this.options.commandType === "file" ? file.endsWith(".js") : fs.statSync(`${this.options.commandFolder}/${file}`).isDirectory()), i;
 
-                if (commands.length < 1) reject("no commands");
+                if (commands_.length === 0) return reject("No Folders/file in the provided location");
 
                 let _commands = 0, _slashCommands = 0, _normalCommands = 0;
 
-                for (i = 0; i < commands.length; i++) {
-                    command = require(`${this.options.commandFolder}/${commands[i]}`);
+                if (this.options.commandType === "file") await add.bind(this)(commands_);
+                else {
+                    for (let i = 0; i < commands_.length; i++) {
+                        await add.bind(this)(fs.readdirSync(`${this.options.commandFolder}/${commands_[i]}`).filter(file => file.endsWith(".js")), `/${commands_[i]}`);
+                    }
+                }
 
-                    if (!command.name || !command.run) continue;
+                function add(commands, ex = "") {
+                    return new Promise((res) => {
+                        for (i = 0; i < commands.length; i++) {
+                            command = require(`${this.options.commandFolder}${ex}/${commands[i]}`) || {};
 
-                    command.name = command.name.replace(/ /g, "-").toLowerCase();
-                    this.client.commands.set(command.name, command);
-                    command.aliases ? command.aliases.forEach((v) => this.client.commandAliases.set(v, command.name)) : null;
+                            if (!command.name || !command.run) continue;
 
-                    _commands++;
+                            command.name = command.name.replace(/ /g, "-").toLowerCase();
+                            this.client.commands.set(command.name, command);
+                            command.aliases ? command.aliases.forEach((v) => this.client.commandAliases.set(v, command.name)) : null;
 
-                    if (command.slash !== true) _normalCommands++;
-                    if (command.slash !== true && command.slash !== "both" && this.options.allSlash !== true) continue;
+                            _commands++;
 
-                    _slashCommands++;
+                            if (command.slash !== true) _normalCommands++;
+                            if (command.slash !== true && command.slash !== "both" && this.options.allSlash !== true) continue;
 
-                    if (!command.description) throw new Error("Description is required in a command\n Description was not found in " + command.name)
+                            _slashCommands++;
 
-                    if ((!command.options || command.options.length === 0) && command.args) command.options = getOptions(command.args, command.argsDescription, command.argsType);
-                    else if (command.options && command.options.length > 0) {
-                        for (let i = 0; i < command.options.length; i++) {
-                            command.options[i].type = getType(command.options[i].type);
-                            command.options[i].name = command.options[i].name?.trim()?.replace(/ /g, "-")
+                            if (!command.description) throw new Error("Description is required in a command\n Description was not found in " + command.name)
+
+                            if ((!command.options || command.options.length === 0) && command.args) command.options = getOptions(command.args, command.argsDescription, command.argsType);
+                            else if (command.options && command.options.length > 0) {
+                                for (let i = 0; i < command.options.length; i++) {
+                                    command.options[i].type = getType(command.options[i].type);
+                                    command.options[i].name = command.options[i].name?.trim()?.replace(/ /g, "-")
+                                }
+                            }
+
+                            const command_data = {
+                                name: command.name,
+                                description: command.description,
+                                options: command.options || [],
+                                type: 1,
+                            }
+
+                            if (command.global) globalCommands.push(command_data)
+                            else guildCommands.push(command_data);
                         }
-                    }
 
-                    const command_data = {
-                        name: command.name,
-                        description: command.description,
-                        options: command.options || [],
-                        type: 1,
-                    }
-
-                    if (command.global) globalCommands.push(command_data)
-                    else guildCommands.push(command_data);
+                        res();
+                    })
                 }
 
                 const rest = new REST({ version: '9' }).setToken(this.client.token);

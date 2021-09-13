@@ -46,10 +46,10 @@ client.on('ready',()=>{
     const handler = new Handler(client, {
         // Locations of folder should be provided with respect to the main file
         // Location of the command folder
-        commandFolder:"/commands"
+        commandFolder:"/commands",
 
         // Location of the event folder
-        eventFolder:"/events"
+        eventFolder:"/events",
 
         // Guild ID(s) where you want to enable slash commands (if slash command isn't global)
         slashGuilds:["guild id"], 

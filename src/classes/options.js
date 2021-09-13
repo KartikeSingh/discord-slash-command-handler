@@ -7,12 +7,14 @@ class HandlerOptions {
      * @param {HandlerOption} options 
      */
     constructor(options) {
-        const { permissionReply, timeoutMessage, errorReply, notOwnerReply, prefix, slashGuilds, owners, handleSlash, handleNormal, timeout, commandFolder, eventFolder, mongoURI, allSlash } = options;
+        if (options === true) return;
+        const { permissionReply, timeoutMessage, errorReply, notOwnerReply, prefix, slashGuilds, owners, handleSlash, handleNormal, timeout, commandFolder, eventFolder, mongoURI, allSlash, commandType } = options;
         const { path } = require.main;
 
         this.commandFolder = `${path}/${commandFolder}`;
         this.eventFolder = eventFolder ? `${path}/${eventFolder}` : false;
 
+        if (("commandType" in options) && (commandType !== "file" && commandType !== "folder")) throw new Error("Command type should be \"folder\" or \"folder\" but we got " + commandType)
         if (!fs.existsSync(this.commandFolder)) throw new Error("Invalid command folder, please provide an correct folder");
         if (this.eventFolder) if (!fs.existsSync(this.eventFolder)) throw new Error("Invalid event folder, please provide an correct folder");
 
@@ -22,6 +24,7 @@ class HandlerOptions {
         this.timeoutMessage = timeoutMessage || "{mention}, please wait for {remaining} before using {command} command";
         this.errorReply = errorReply || "Unable to run this command due to error";
         this.notOwnerReply = notOwnerReply || "Only bot owner's can use this command";
+        this.commandType = commandType || "file";
         this.mongoURI = mongoURI || false;
         this.prefix = prefix;
         this.slashGuilds = slashGuilds || [];
@@ -39,6 +42,7 @@ module.exports = HandlerOptions;
      * The options for Command Handler
      * @typedef {Object} HandlerOption The options for the slash command handler
      * @property {String} commandFolder The location where all the commands are present.
+     * @property {"folder" | "file"} commandType whether the command folder contains "folder" or "file".
      * @property {String} eventFolder The location where all the events are present.
      * @property {String} prefix The prefix of the bot.
      * @property {Boolean} handleNormal Whether the package have to handle normal commands or not.

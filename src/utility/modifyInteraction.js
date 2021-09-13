@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 
-module.exports = (client,interaction,guild) => {
+module.exports = (client, interaction, guild) => {
     const args = [];
 
     interaction.options._hoistedOptions?.forEach((v) => args.push(v.value))
@@ -13,7 +13,9 @@ module.exports = (client,interaction,guild) => {
         users: new Discord.Collection(),
         roles: new Discord.Collection(),
     }
-    
+
+    interaction.reply = interaction.followUp;
+
     args.forEach(v => {
         let member = guild.members.cache.get(v);
         let user = client.users.cache.get(v);
