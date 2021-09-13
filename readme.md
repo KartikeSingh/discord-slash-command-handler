@@ -27,7 +27,8 @@ const Handler = require('discord-slash-command-handler').Handler;
 
 client.on('ready',()=>{
     // replace src/commands to the path to your commands folder.
-    const handler = new Handler(client, { guilds: ["guild id"], commandFolder:"/commands" } );
+    // if command folder contain files than commandType: "file" else commandType: "folder"
+    const handler = new Handler(client, { guilds: ["guild id"], commandFolder:"/commands",commandType: "file" || "folder"});
 
     console.log("bot is up");
 });
@@ -47,6 +48,9 @@ client.on('ready',()=>{
         // Locations of folder should be provided with respect to the main file
         // Location of the command folder
         commandFolder:"/commands",
+
+        // Folder contains files or folders ?
+        commandType: "file" || "folder",
 
         // Location of the event folder
         eventFolder:"/events",
