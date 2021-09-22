@@ -16,7 +16,6 @@ class HandlerOptions {
 
         if (("commandType" in options) && (commandType !== "file" && commandType !== "folder")) throw new Error("Command type should be \"folder\" or \"folder\" but we got " + commandType)
         if (!fs.existsSync(this.commandFolder)) throw new Error("Invalid command folder, please provide an correct folder");
-        if (this.eventFolder) if (!fs.existsSync(this.eventFolder)) throw new Error("Invalid event folder, please provide an correct folder");
 
         if (!prefix && handleNormal === true) throw new Error("Please provide a prefix");
 
