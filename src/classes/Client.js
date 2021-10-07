@@ -15,29 +15,15 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var args = /** @class */ (function (_super) {
-    __extends(args, _super);
-    function args(args) {
-        var _this = _super.call(this) || this;
-        _this._collection = new Map();
-        args === null || args === void 0 ? void 0 : args.forEach(function (v) {
-            _this.push(v.value ? v.value : v);
-            if (v.name) {
-                _this._collection.set(v.name, v.value);
-                _this[v.name] = v.value;
-            }
-        });
+var discord_js_1 = require("discord.js");
+var client = /** @class */ (function (_super) {
+    __extends(client, _super);
+    function client(options) {
+        var _this = _super.call(this, options) || this;
+        _this.commands = new discord_js_1.Collection();
+        _this.commandAliases = new discord_js_1.Collection();
         return _this;
     }
-    args.prototype.get = function (key) {
-        return this._collection.get(key) || this[key];
-    };
-    args.prototype.toArray = function () {
-        return this;
-    };
-    args.prototype.toMap = function () {
-        return this._collection;
-    };
-    return args;
-}(Array));
-exports.default = args;
+    return client;
+}(discord_js_1.Client));
+exports.default = client;
