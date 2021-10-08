@@ -1,7 +1,6 @@
 import Client from "./Client";
-
-const mongoose = require('mongoose');
-const timeout = require('../models/timeout');
+import { connect } from 'mongoose';
+import timeout from '../models/timeout';
 
 class Timeout {
     client: Client;
@@ -12,12 +11,12 @@ class Timeout {
         this.mongoURI = mongoURI;
         this.cached = new Map();
 
-        if (mongoURI !== "no_uri") this.connect().catch(e => { throw new Error("Invalid MONGO_URI was provided in Discord-Slash-Command_handler") }).then(v => console.log("[ discord-slash-command-handler ] : Mongoose Database Connected Successfully"))
+        if (mongoURI !== "no_uri") this.connect().then(v => console.log("[ discord-slash-command-handler ] : Mongoose Database Connected Successfully")).catch(e => { throw new Error("Invalid MONGO_URI was provided in Discord-Slash-Command_handler") });
     }
 
     async connect() {
         return new Promise((resolve, reject) => {
-            mongoose.connect(this.mongoURI, { useUnifiedTopology: true, useNewUrlParser: true }).then(v => resolve(v)).catch(e => reject(e));
+            connect(this.mongoURI).then(v => resolve(v)).catch(e => reject(e));
         })
     }
 

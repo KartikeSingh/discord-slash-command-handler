@@ -22,7 +22,7 @@ export interface Command {
     name: string,
     description: string,
     permissions?: string[],
-    type?: string | number,
+    type?: number,
     aliases?: string[],
     category?: string,
     slash?: "both" | boolean,
@@ -31,17 +31,21 @@ export interface Command {
     dm?: "only" | boolean,
     timeout?: number | string,
     args?: string,
-    argsType?: string | number,
+    argsType?: string,
     argsDescription?: string,
-    options?: [{
-        name: string,
-        description: string,
-        required: boolean,
-        type: string | number,
-    }],
+    options?: Options[],
 
     error?: (errorType: string, command: Command, interaction: Message | _Message, error?: Error) => void,
 
     run(commandData: CommandData): void;
     run(client: Client, interaction: Message | _Message, args: Args, handler: Handler, subCommand: string | undefined, subCommandGroup: string | undefined): void;
+}
+
+interface Options {
+    name: string,
+    description: string,
+    required: boolean,
+    type?: string | number,
+    choices?: string | number,
+    options?:Options
 }

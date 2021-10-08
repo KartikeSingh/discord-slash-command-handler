@@ -26,35 +26,67 @@ class Handler extends EventEmitter {
         this.Timeout = new Timeout(this.client, this.options.mongoURI);
         this.client.commands = new Collection();
         this.client.commandAliases = new Collection();
+
+        this.setCommands().then(() => {
+            this.emit("commandsCreated", this.client.commands, this.client.commandAliases);
+            if (this.options.handleSlash) this.handleSlashCommands();
+            if (this.options.handleNormal) this.handleNormalCommands();
+        })
     }
 
     setCommands() {
-        const globalCommands = [], guildCommands = [];
+        const globalCommands: Array<Command> = [], guildCommands: Array<Command> = [];
 
         return new Promise(async (resolve, reject) => {
-            let Commands = readdirSync(this.options.commandFolder)?.filter(file => this.options.commandType === "file" ? file.endsWith(".ts") || file.endsWith(".js") : statSync(`${this.options.commandFolder}/${file}`).isDirectory()), i;
-            if (Commands.length === 0) return reject("No Folders/file in the provided location");
+            try {
+                let Commands = readdirSync(this.options.commandFolder)?.filter(file => this.options.commandType === "file" ? file.endsWith(".ts") || file.endsWith(".js") : statSync(`${this.options.commandFolder}/${file}`).isDirectory()), i;
+                if (Commands.length === 0) return reject("No Folders/file in the provided location");
 
-            if (this.options.commandType === "file") {
-                const data = await this.Utils.add.bind(this)(Commands);
-                globalCommands.push(...data.globalCommands);
-                guildCommands.push(...data.guildCommands);
-            }
-            else {
-                for (let i = 0; i < Commands.length; i++) {
-                    const data = await this.Utils.add.bind(this)(readdirSync(`${this.options.commandFolder}/${Commands[i]}`).filter(file => file.endsWith(".ts") || file.endsWith(".js")), `/${Commands[i]}`);
+                if (this.options.commandType === "file") {
+                    const data = await this.Utils.add.bind(this)(Commands);
                     globalCommands.push(...data.globalCommands);
                     guildCommands.push(...data.guildCommands);
                 }
-            }
+                else {
+                    for (let i = 0; i < Commands.length; i++) {
+                        const data = await this.Utils.add.bind(this)(readdirSync(`${this.options.commandFolder}/${Commands[i]}`).filter(file => file.endsWith(".ts") || file.endsWith(".js")), `/${Commands[i]}`);
+                        globalCommands.push(...data.globalCommands);
+                        guildCommands.push(...data.guildCommands);
+                    }
+                }
 
-            resolve({ commands: this.client.commands, commandAliases: this.client.commandAliases })
+                let commands = [];
+                this.client.commands.forEach(v => {
+                    if (this.Utils.fixType(v.type) === 1) {
+                        return commands.push({ name: v.name, description: v.description, type: v.type, options: v.options })
+                    } else {
+                        return commands.push({ name: v.name, description: v.description, type: v.type })
+                    }
+                })
+
+                if (this.client.isReady() === true) {
+                    this.client.application.commands.set(commands)
+                    this.options.slashGuilds.forEach(v => this.client.application.commands.set(commands, v));
+                } else {
+                    this.client.once('ready', () => {
+                        this.client.application.commands.set(commands)
+                        this.options.slashGuilds.forEach(v => this.client.application.commands.set(commands, v));
+                    })
+                }
+
+                resolve({ commands: this.client.commands, commandAliases: this.client.commandAliases })
+
+            } catch (e) {
+                reject(e);
+            }
         })
     }
 
     async handleSlashCommands() {
+
         this.client.on("interactionCreate", async (interaction) => {
-            if (!(interaction instanceof CommandInteraction) && !(interaction instanceof ContextMenuInteraction)) return;
+
+            if (!interaction.isCommand() && !interaction.isContextMenu()) return;
 
             const command = this.client.commands.get(interaction.commandName), message = new _Message(this.client, interaction, interaction.guild), member = interaction.guild.members.cache.get(interaction.user.id);
 
@@ -71,7 +103,7 @@ class Handler extends EventEmitter {
                     else if (this.listeners("dmOnly").length > 0) this.emit("dmOnly", command, message);
                     else interaction.reply(this.options.dmOnlyReply.replace(/{mention}/g, message.author.toString()).replace(/{command}/g, command.name));
 
-                    return;
+                    return
                 }
 
                 if (command.ownerOnly && !this.options.owners.includes(interaction.user.id)) {
@@ -79,7 +111,7 @@ class Handler extends EventEmitter {
                     else if (this.listeners("notOwner").length > 0) this.emit("notOwner", command, message);
                     else interaction.reply(this.options.notOwnerReply.replace(/{mention}/g, message.author.toString()));
 
-                    return;
+                    return
                 }
 
                 const tm = await this.Timeout.getTimeout(interaction.user.id, interaction.commandName);
@@ -106,8 +138,8 @@ class Handler extends EventEmitter {
                     user: interaction.member.user,
                     message,
                     handler: this,
-                    subCommand: interaction.options.getSubcommand(),
-                    subCommandGroup: interaction.options.getSubcommandGroup(),
+                    subCommand: interaction.options.getSubcommand(false),
+                    subCommandGroup: interaction.options.getSubcommandGroup(false),
                 }
 
                 let allow = command.permissions ? command.permissions.length === 0 : true;
@@ -139,6 +171,8 @@ class Handler extends EventEmitter {
                 else this.emit("slashCommand", command, command_data);
 
             } catch (e) {
+                console.log(e);
+                
                 if (typeof (command.error) === "function") command.error("exception", command, message, e);
                 else if (this.listeners("exception").length > 0) this.emit("exception", command, message, e);
                 else interaction.reply(this.options.errorReply);

@@ -1,16 +1,15 @@
-import { CommandInteraction, ContextMenuInteraction, Guild } from "discord.js";
-import Client from "../classes/Client";
 import Handler from "../classes/handler";
+import { Command } from "../interfaces";
 
 class Utils {
-    static fixType(type: string | number = 1) {
+    static fixType(type: string | number = 1): number {
         if (typeof (type) !== "number" && typeof (type) !== "string") throw new Error("Command Type should be a string or a number");
 
         type = typeof (type) === "string" ? type.toLowerCase() : type;
 
         if (!type || type > 3 || type < 1 || type === "chat" || type === "chat_input") return 1;
         else if (type === "user") return 2;
-        else if (type === "message") return 3;
+        else if (type === "message") return 4;
         else if (typeof (type) === "number") return type;
         else return 1;
     }
@@ -54,11 +53,13 @@ class Utils {
         return new Promise((res) => {
             const globalCommands = [], guildCommands = [];
             for (let i = 0; i < commands.length; i++) {
-                const command = require(`${this.options.commandFolder}${extraFolder}/${commands[i]}`) || {};
+                const command: Command = require(`${this.options.commandFolder}${extraFolder}/${commands[i]}`) || {};
 
                 if (!command.name || !command.run) continue;
 
-                command.name = command.name.replace(/ /g, "-").toLowerCase();
+                if (Utils.fixType(command.type) !== 1) command.name = command.name.replace(/ /g, "-").toLowerCase();
+                if (Utils.fixType(command.type) !== 1) command.description = "";
+
                 this.client.commands.set(command.name, command);
 
                 command.aliases ? command.aliases.forEach((v) => this.client.commandAliases.set(v, command.name)) : null;
@@ -67,7 +68,7 @@ class Utils {
 
                 if (!command.description) throw new Error("Description is required in a slash command\n Description was not found in " + command.name)
 
-                if ((!command.options || command.options.length === 0) && command.args) command.options = this.Utils.getOptions(command.args, command.argsDescription, command.argsType);
+                if ((!command.options || command.options && command.options.length < 1) && command.args) command.options = this.Utils.getOptions(command.args, command.argsDescription, command.argsType);
                 else if (command.options && command.options.length > 0) {
                     for (let i = 0; i < command.options.length; i++) {
                         command.options[i].type = this.Utils.getType(command.options[i].type);

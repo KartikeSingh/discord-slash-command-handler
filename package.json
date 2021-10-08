@@ -29,6 +29,7 @@
     "access": "public"
   },
   "devDependencies": {
+    "@types/mongoose": "^5.11.97",
     "@types/node": "^16.10.3"
   }
 }

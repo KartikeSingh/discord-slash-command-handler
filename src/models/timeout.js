@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var _a = require('mongoose'), Schema = _a.Schema, model = _a.model, SchemaTypes = _a.SchemaTypes;
-var timeoutSchema = new Schema({
-    from: { type: SchemaTypes.Number, default: Date.now() },
-    command: { type: SchemaTypes.String, default: "" },
-    user: { type: SchemaTypes.String, default: "" },
+const mongoose_1 = require("mongoose");
+const timeoutSchema = new mongoose_1.Schema({
+    from: { type: mongoose_1.SchemaTypes.Number, default: Date.now() },
+    command: { type: mongoose_1.SchemaTypes.String, default: "" },
+    user: { type: mongoose_1.SchemaTypes.String, default: "" },
 });
-exports.default = model("timeout_logs", timeoutSchema);
+exports.default = (0, mongoose_1.model)("timeout_logs", timeoutSchema);

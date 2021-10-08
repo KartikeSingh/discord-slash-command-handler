@@ -1,4 +1,6 @@
-import { CommandInteraction, Collection,ContextMenuInteraction, Guild, GuildChannel, GuildMember, Interaction, Role, ThreadChannel, User } from 'discord.js';
+// @ts-nocheck
+
+import { CommandInteraction, Collection, ContextMenuInteraction, Guild, GuildChannel, GuildMember, Interaction, Role, ThreadChannel, User } from 'discord.js';
 import Client from './Client';
 
 class Message {
@@ -15,6 +17,9 @@ class Message {
         interaction.options.data?.forEach((v) => args.push(v.value))
 
         this.author = interaction.user;
+        this.channel = interaction.channel;
+        this.createdAt = interaction.createdAt
+        this.createdTimestamp = interaction.createdTimestamp
         this.content = `/${interaction.commandName} ${args.join(" ")}`;
         this.mentions = {
             channels: new Collection(),
