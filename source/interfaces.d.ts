@@ -37,8 +37,7 @@ export interface Command {
 
     error?: (errorType: string, command: Command, interaction: Message | _Message, error?: Error) => void,
 
-    run(commandData: CommandData): void;
-    run(client: Client, interaction: Message | _Message, args: Args, handler: Handler, subCommand: string | undefined, subCommandGroup: string | undefined): void;
+    run(...args: any[]): void;
 }
 
 interface Options {
@@ -47,5 +46,5 @@ interface Options {
     required: boolean,
     type?: string | number,
     choices?: string | number,
-    options?:Options
+    options?: Options
 }

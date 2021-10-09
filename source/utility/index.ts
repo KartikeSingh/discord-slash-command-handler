@@ -90,6 +90,33 @@ class Utils {
             res({ globalCommands, guildCommands });
         })
     }
+
+    static getParameters(keys: any, values: any, runParameters: string[]): Array<any> {
+        const parameters = [];
+
+        runParameters.forEach(v => {
+            const data = {};
+            if (v.includes("0")) {
+                for (let i = 0; i < 10; i++) {
+                    if (values[i.toString()]) data[keys[i.toString()]] = values[i.toString()];
+                }
+
+                parameters.push(data);
+            } else if (v.length === 1) {
+                if (values[v]) parameters.push(values[v]);
+            } else {
+                const V = v.split(""), data = {};
+
+                V.forEach(i => {
+                    if (values[i.toString()]) data[keys[i.toString()]] = values[i.toString()];
+                })
+
+                if (Object.keys(data).length > 0) parameters.push(data)
+            }
+        })
+
+        return parameters;
+    }
 }
 
 export default Utils;

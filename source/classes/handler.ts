@@ -1,4 +1,4 @@
-import { CommandInteraction, ContextMenuInteraction, Collection, Message } from 'discord.js';
+import { Collection, Message } from 'discord.js';
 import { EventEmitter } from 'events';
 import { readdirSync, statSync } from 'fs';
 import Utils from '../utility';
@@ -10,6 +10,7 @@ import _Message from './Message';
 import ms from 'ms-prettify';
 import Args from './args';
 import { Command, CommandData } from '../interfaces';
+import { isGeneratorFunction } from 'util/types';
 
 class Handler extends EventEmitter {
     client: Client;
@@ -90,6 +91,8 @@ class Handler extends EventEmitter {
 
             const command = this.client.commands.get(interaction.commandName), message = new _Message(this.client, interaction, interaction.guild), member = interaction.guild.members.cache.get(interaction.user.id);
 
+            if (this.options.autoDefer === true) interaction.deferReply();
+
             try {
                 if (command.dm !== true && !interaction.guild) {
                     if (typeof (command.error) === "function") command.error("guildOnly", command, message);
@@ -128,19 +131,29 @@ class Handler extends EventEmitter {
 
                 const args = new Args([...interaction?.options?.data] || []);
 
-                const command_data = {
-                    client: this.client,
-                    guild: interaction.guild,
-                    channel: interaction.channel,
-                    interaction: message,
-                    args,
-                    member: interaction.member,
-                    user: interaction.member.user,
-                    message,
-                    handler: this,
-                    subCommand: interaction.options.getSubcommand(false),
-                    subCommandGroup: interaction.options.getSubcommandGroup(false),
+                const values = {
+                    "1": this.client,
+                    "2": interaction.guild,
+                    "3": interaction.channel,
+                    "4": message,
+                    "5": args,
+                    "6": interaction.member,
+                    "7": interaction.member.user,
+                    "8": message,
+                    "9": this,
+                }, keys = {
+                    "1": "client",
+                    "2": "guild",
+                    "3": "channel",
+                    "4": "interaction",
+                    "5": "args",
+                    "6": "member",
+                    "7": "user",
+                    "8": "message",
+                    "9": "handler"
                 }
+
+                const parameters = this.Utils.getParameters(keys, values, this.options.runParameters);
 
                 let allow = command.permissions ? command.permissions.length === 0 : true;
 
@@ -155,8 +168,6 @@ class Handler extends EventEmitter {
                     return;
                 }
 
-                interaction.deferReply();
-
                 let timeout;
 
                 if (command.timeout) {
@@ -166,13 +177,12 @@ class Handler extends EventEmitter {
 
                 if (timeout && this.options.timeout === true) this.Timeout.setTimeout(interaction.user.id, command.name, Date.now() + timeout);
 
-                // @ts-ignore
-                if (this.options.handleSlash === true) command.run(command_data);
-                else this.emit("slashCommand", command, command_data);
+                if (this.options.handleSlash === true) command.run(...parameters);
+                else this.emit("slashCommand", command, ...parameters);
 
             } catch (e) {
                 console.log(e);
-                
+
                 if (typeof (command.error) === "function") command.error("exception", command, message, e);
                 else if (this.listeners("exception").length > 0) this.emit("exception", command, message, e);
                 else interaction.reply(this.options.errorReply);
