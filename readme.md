@@ -211,7 +211,7 @@ handler.on('exception', (command, message,error) => {
 
 Advanced Method
 ```js
-const Command = require("discord-slash-command-handler").Command;
+const { Command } = require("discord-slash-command-handler");
 
 class commandName extends Command {
      /**
