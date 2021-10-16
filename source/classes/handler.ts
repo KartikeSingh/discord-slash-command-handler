@@ -56,14 +56,14 @@ class Handler extends EventEmitter {
                     }
                 }
 
-                let commands = [];
-                this.client.commands.forEach(v => {
-                    if (this.Utils.fixType(v.type) === 1) {
-                        return commands.push({ name: v.name, description: v.description, type: v.type, options: v.options })
-                    } else {
-                        return commands.push({ name: v.name, description: v.description, type: v.type })
-                    }
-                })
+                const commands = this.client.commands.map(v => {
+                    return {
+                        name: v.name,
+                        description: v.description,
+                        type: v.type,
+                        options: this.Utils.fixType(v.type) === 1 ? v.options : undefined
+                    };
+                });
 
                 if (this.client.isReady() === true) {
                     this.client.application.commands.set(commands)
@@ -132,25 +132,25 @@ class Handler extends EventEmitter {
                 const args = new Args([...interaction?.options?.data] || []);
 
                 const values = {
-                    "1": this.client,
-                    "2": interaction.guild,
-                    "3": interaction.channel,
-                    "4": message,
-                    "5": args,
-                    "6": interaction.member,
-                    "7": interaction.member.user,
-                    "8": message,
-                    "9": this,
+                    1: this.client,
+                    2: interaction.guild,
+                    3: interaction.channel,
+                    4: message,
+                    5: args,
+                    6: interaction.member,
+                    7: interaction.member.user,
+                    8: message,
+                    9: this,
                 }, keys = {
-                    "1": "client",
-                    "2": "guild",
-                    "3": "channel",
-                    "4": "interaction",
-                    "5": "args",
-                    "6": "member",
-                    "7": "user",
-                    "8": "message",
-                    "9": "handler"
+                    1: "client",
+                    2: "guild",
+                    3: "channel",
+                    4: "interaction",
+                    5: "args",
+                    6: "member",
+                    7: "user",
+                    8: "message",
+                    9: "handler"
                 }
 
                 const parameters = this.Utils.getParameters(keys, values, this.options.runParameters);
@@ -203,7 +203,7 @@ class Handler extends EventEmitter {
 
                 command = this.client.commands.get(cmd) || this.client.commands.get(this.client.commandAliases.get(cmd));
 
-                if (!command || command.slash === true) return;
+                if (command?.slash === true) return;
 
                 if (command.ownerOnly && !this.options.owners.includes(message.author.id)) {
                     if (typeof (command.error) === "function") command.error("notOwner", command, message);
@@ -293,8 +293,6 @@ class Handler extends EventEmitter {
                 if (typeof (command.error) === "function") command.error("exception", command, message, e);
                 else if (this.listeners("exception").length > 0) this.emit("exception", command, message, e);
                 else message.reply(this.options.errorReply);
-
-                return;
             }
         })
     }
