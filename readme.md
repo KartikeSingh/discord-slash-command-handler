@@ -21,7 +21,7 @@ npm i discord-slash-command-handler
 # Basic handler example
 
 ```js
-// NOTE: This package only supports Discord.js v12
+// NOTE: This package only supports Discord.js V 13
 const client = new Discord.client(options);
 const { Handler } = require('discord-slash-command-handler');
 
@@ -141,113 +141,87 @@ run: async ({ args }) => {
 # All available events
 
 ```js
-// this event is invoked when Commands are added to client / Commands are loaded
-handler.on('commandsCreated', (commands, commandAliases) => {
-     /*
-      * commands: the collection of all the bot commands
-      * commandAliases: the collection of all the bot command's aliases
-      */
-});
+/**
+ * this event is invoked when Commands are added to client / Commands are loaded
+ * @param {Collection<string,command>} commands The collection of commands
+ * @param {Collection<string,string>} commandAliases The collection of command aliases
+ */
+handler.on('commandsCreated', (commands, commandAliases) => { });
 
-// this event is invoked when a user used a slash command and handleSlash is 'both'
-handler.on('slashCommand', (command, command_data) => {
-     /*
-      * commands: the command used
-      * command_data: the command data ( for more info read data types at bottom )
-      */
-});
+/**
+ * this event is invoked when a user used a slash command and handleSlash is 'both'
+ * @param {command} command the command used
+ * @param {Object} command_data the command data, check #types for more information
+ */
+handler.on('slashCommand', (command, command_data) => { });
 
-// this event is invoked when a user used a normal command and handleNormal is 'both'
-handler.on('normalCommand', (command, command_data) => {
-     /*
-      * commands: the command used
-      * command_data: the command data ( for more info read data types at bottom )
-      */
-});
+/**
+ * this event is invoked when a user used a normal command and handleNormal is 'both'
+ * @param {command} command the command used
+ * @param {Object} command_data the command data, check #types for more information
+ */
+handler.on('normalCommand', (command, command_data) => { });
 
-// This event is invoked when user don't provides enough arguments in a command
-handler.on('lessArguments', (command, message) => {
-     /*
-      * commands: the command used
-      * message: the Discord.js' Message object
-      */
-});
+/**
+ * This event is invoked when user don't provides enough arguments in a command
+ * @param {command} command the command used
+ * @param {message | interaction} message The Command Interaction or the message
+ */
+handler.on('lessArguments', (command, message) => { });
 
-// This event is invoked when command is owner only but user is not an owner
-handler.on('notOwner', (command, message) => {
-     /*
-      * commands: the command used
-      * message: the Discord message object
-      */
-});
+/**
+ * This event is invoked when command is owner only but user is not an owner
+ * @param {command} command the command used
+ * @param {message | interaction} message The Command Interaction or the message
+ */
+handler.on('notOwner', (command, message) => { });
 
-// This event is invoked when user don't have enough permissions to use a command
+/**
+ * This event is invoked when user don't have enough permissions to use a command
+ * @param {command} command the command used
+ * @param {message | interaction} message The Command Interaction or the message
+ */
 handler.on('noPermission', (command, message) => {
-     /*
-      * commands: the command used
-      * message: the Discord message object
-      */
+    /*
+     * commands: the command used
+     * message: the Discord message object
+     */
 });
 
-    // This event is invoked when user is on a timeout to use a command
-handler.on('timeout', (command, message) => {
-     /*
-      * commands: the command used
-      * message: the Discord message object
-      */
-});
+/**
+ * This event is invoked when user is on a mOnly to use a command
+ * @param {command} command the command used
+ * @param {message | interaction} message The Command Interaction or the message
+ */
+handler.on('timeout', (command, message) => { });
 
-// This event is invoked when an unknown error occurs while running a command
-handler.on('exception', (command, message,error) => {
-     /*
-      * commands: the command used
-      * message: the Discord message object
-      * error: the error
-      */
-});
+/**
+ * This event is invoked when a command is DM only but used in a guild
+ * @param {command} command the command used
+ * @param {message | interaction} message The Command Interaction or the message
+ */
+handler.on('dmOnly', (command, message) => { });
+
+/**
+* This event is invoked when a command is guild only but used in a DM
+* @param {command} command the command used
+* @param {message | interaction} message The Command Interaction or the message
+*/
+handler.on('guildOnly', (command, message) => { });
+
+/**
+ * This event is invoked when an unknown error occurs while running a command
+ * @param {command} command the command used
+ * @param {message | interaction} message The Command Interaction or the message
+ * @param {Error} error the error
+ */
+handler.on('exception', (command, message, error) => { });
 ```
 
 # How to define command
 
-Advanced Method
 ```js
-const { Command } = require("discord-slash-command-handler");
-
-class commandName extends Command {
-     /**
-     * The list of paramters
-     * @param {String} name The name of the command
-     * @param {String} description The description of the command
-     * @param {Array<String>} aliases The aliases of the command
-     * @param {String} category The catgory Command belongs to
-     * @param {"true" | "false" | "both"} slash Wether the command is an slash command or normal or both
-     * @param {Boolean} global Wether the SLASH command works globally
-     * @param {Boolean} ownerOnly Wether the command can only be accessed by the owner of the client
-     * @param {Number} timeout The cooldown for the command in milliseconds
-     * @param {String} args The arguments for a command
-     * @param {String} argsType The argument type used for slash command
-     * @param {String} argsDescription The argument description used for slash command
-     * @param {Array<Options>} options The array of options for slash commands
-     */
-    constructor() {
-        super("commandName", "Command Description", ["An Aliases"], "Cool Category", "true", false, false, 5000, "<haha>", "", "", []);
-    }
-
-    async run(commandData) {
-        // Do your thing
-    }
-
-    // Optional
-    error: async (errorType, command, message, error) => {
-        // Handle the errors
-    })
-}
-module.exports = new commandName();
-```
-
-Basic Method
-```js
-file name: help.js
+// file name: help.js
 
 module.exports = {
     name: "help", // Name of the command
@@ -304,7 +278,7 @@ module.exports = {
     }
 
     // Required
-    run: async (command_data) => {
+    run: async (command_data) => { // you can add custom run arguments
         // your command's code
     }
 }
@@ -317,29 +291,54 @@ module.exports = {
 // Add slash porperty
 slash: true, // true => only slash command, "both" => slash and normal command, false => normal command
 
+// you have to fix your run method or add custom run command parameter in handler options for that check #specials
+
 // All done. but there are few limitations like, message object is not Discord.Message object
 // it is an custom objected created by us its properties are listen in # datatype 's slash_command
 ```
 
 ## Changes
 ```js
-// All of the message functions will not work
+// Various message functions will not work
 
-// Examples: 
-message.reply(),  message.delete() // etc will not work
+// like 
+message.delete();
 
-// try using
-channel.send()
+// reply function will not work if autoDefer is true, if auto defer is false than it will work once
+// so instead use message.editReply()
+
 // Still having troubles ? contact me on discord
 ```
 
 # Specials
+- ### Reload Commands
 ```js
 ...
 
 handler.reloadCommands(); // to reload the commands
 
 ...
+```
+- ### Custom run parameters
+```js
+const { Handler } = require('discord-slash-command-handler');
+
+const handler = new Handler({
+    runParameters: ["1","2"] || ["12","3"] || ["0"]
+});
+
+// Number refers to different values, if provided more than one number in the string than it returns a object.
+const type = {
+    1: "client",
+    2: "guild",
+    3: "channel",
+    4: "interaction",
+    5: "args",
+    6: "member",
+    7: "user",
+    8: "message",
+    9: "handler"
+}
 ```
 
 # Date Types
@@ -367,14 +366,12 @@ slash_message = {
     createdAT, // timestamps of the message creation
 }
 
-errorType = "noPermission" | "exception" | "lessArguments" | "timeout";
+errorType = "noPermission" | "exception" | "lessArguments" | "timeout" | "dmOnly" | "guildOnly";
 ```
 
 
-# Report Problems at
-
-[Github](https://github.com/KartikeSingh/discord-slash-command-handler/issues)
+# Report Problems at [Github](https://github.com/KartikeSingh/discord-slash-command-handler/issues)
 
 # Links
-
-[Discord](https://discord.gg/XYnMTQNTFh)
+[Discord Server](https://discord.gg/XYnMTQNTFh)
+[Constributor](https://discord.gg/QpuwQYDNar)
