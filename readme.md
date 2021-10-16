@@ -21,16 +21,16 @@ npm i discord-slash-command-handler
 # Basic handler example
 
 ```js
-// NOTE : only Discord.js V 12 is supported
+// NOTE: This package only supports Discord.js v12
 const client = new Discord.client(options);
-const Handler = require('discord-slash-command-handler').Handler;
+const { Handler } = require('discord-slash-command-handler');
 
 client.on('ready',()=>{
-    // replace src/commands to the path to your commands folder.
-    // if command folder contain files than commandType: "file" else commandType: "folder"
+    // replace src/commands to the path with your commands folder.
+    // if your commands folder contain files then use commandType: "file". otherwise commandType: "folder"
     const handler = new Handler(client, { guilds: ["guild id"], commandFolder:"/commands",commandType: "file" || "folder"});
 
-    console.log("bot is up");
+    console.log("bot is up!");
 });
 
 client.login(token);
@@ -40,7 +40,7 @@ client.login(token);
 
 ```js
 const client = new Discord.client(options);
-const Handler = require('discord-slash-command-handler').Handler;
+const { Handler } = require('discord-slash-command-handler');
 
 client.on('ready',()=>{
     // replace src/commands to the path to your commands folder.
@@ -92,7 +92,7 @@ client.on('ready',()=>{
         errorReply: "Unable to run this command due to errors",
 
         // reply to send when command is ownerOnly and user isn't a owner
-        notOwnerReply: "Only bot owner's can use this command",
+        notOwnerReply: "Only bot owners can use this command",
     });
 
     console.log("bot is up");
@@ -101,11 +101,11 @@ client.on('ready',()=>{
 client.login(token);
 ```
 
-# Custom Command Handler ( Slash/Normal )
+# Custom Command Handler (Slash/Normal)
 
 ```js
 ...
-bot.on('ready',()=>{
+bot.on('ready', () => {
     ...
 
     // Custom normal command handler, this function works when handleNormal is 'both'
@@ -127,7 +127,7 @@ bot.on('ready',()=>{
 
 # Handle Arguments for Slash Commands
 ```js
-run : async ({args}) => {
+run : async ({ args }) => {
     // Wanna get an specific argument of a slash command?
     args.get("argument name goes here");
     // argument name = the one specified in options.
@@ -142,15 +142,15 @@ run : async ({args}) => {
 
 ```js
 // this event is invoked when Commands are added to client / Commands are loaded
-handler.on('commandsCreated',(commands ,commandAliases)=>{
+handler.on('commandsCreated', (commands, commandAliases) => {
      /*
-      * commands : the collection of all the bot commands
-      * commandAliases : the collection of all the bot command's aliases
+      * commands: the collection of all the bot commands
+      * commandAliases: the collection of all the bot command's aliases
       */
 });
 
 // this event is invoked when a user used a slash command and handleSlash is 'both'
-handler.on('slashCommand',(command ,command_data)=>{
+handler.on('slashCommand', (command, command_data) => {
      /*
       * commands : the command used
       * command_data : the command data ( for more info read data types at bottom )
@@ -158,26 +158,26 @@ handler.on('slashCommand',(command ,command_data)=>{
 });
 
 // this event is invoked when a user used a normal command and handleNormal is 'both'
-handler.on('normalCommand',(command ,command_data)=>{
+handler.on('normalCommand', (command, command_data) => {
      /*
-      * commands : the command used
-      * command_data : the command data ( for more info read data types at bottom )
+      * commands: the command used
+      * command_data: the command data ( for more info read data types at bottom )
       */
 });
 
 // This event is invoked when user don't provides enough arguments in a command
-handler.on('lessArguments',(command ,message)=>{
+handler.on('lessArguments', (command, message) => {
      /*
-      * commands : the command used
-      * message : the Discord message object
+      * commands: the command used
+      * message: the Discord.js' Message object
       */
 });
 
 // This event is invoked when command is owner only but user is not an owner
 handler.on('notOwner',(command ,message)=>{
      /*
-      * commands : the command used
-      * message : the Discord message object
+      * commands: the command used
+      * message: the Discord message object
       */
 });
 
