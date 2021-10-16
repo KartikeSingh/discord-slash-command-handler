@@ -120,7 +120,7 @@ class HandlerOptions {
         this.mongoURI = mongoURI || undefined;
         this.prefix = prefix;
         this.slashGuilds = slashGuilds || [];
-        this.owners = typeof (owners) === "string" ? owners.split(",") : owners || [];
+        this.owners = typeof owners === "string" ? owners.split(",") : owners || [];
         this.handleSlash = handleSlash || false;
         this.handleNormal = handleNormal || false;
         this.timeout = timeout || false;

@@ -3,14 +3,14 @@ import { Command } from "../interfaces";
 
 class Utils {
     static fixType(type: string | number = 1): number {
-        if (typeof (type) !== "number" && typeof (type) !== "string") throw new Error("Command Type should be a string or a number");
+        if (typeof type !== "number" && typeof type !== "string") throw new Error("Command Type should be a string or a number");
 
-        type = typeof (type) === "string" ? type.toLowerCase() : type;
+        type = typeof type === "string" ? type.toLowerCase() : type;
 
         if (!type || type > 3 || type < 1 || type === "chat" || type === "chat_input") return 1;
         else if (type === "user") return 2;
         else if (type === "message") return 4;
-        else if (typeof (type) === "number") return type;
+        else if (typeof type === "number") return type;
         else return 1;
     }
 
@@ -38,9 +38,9 @@ class Utils {
 
     static getType(type: string | number) {
         try {
-            type = typeof (type) === "string" ? type.toUpperCase().trim() : type;
+            type = typeof type === "string" ? type.toUpperCase().trim() : type;
 
-            if (typeof (type) === "number" && type > 0 && type < 9) return type;
+            if (typeof type === "number" && type > 0 && type < 9) return type;
             if (!type) return 3;
 
             return type === "SUB_COMMAND" ? 1 : type === "SUB_COMMAND_GROUP" ? 2 : type === "STRING" ? 3 : type === "INTEGER" ? 4 : type === "BOOLEAN" ? 5 : type === "USER" ? 6 : type === "CHANNEL" ? 7 : type === "ROLE" ? 8 : 3;

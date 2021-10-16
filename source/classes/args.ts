@@ -7,7 +7,7 @@ class args extends Array {
         this._collection = new Map();
 
         args?.forEach(v => {
-            this.push(v.value ? v.value : v);
+            this.push(v.value || v);
 
             if (v.name) {
                 this._collection.set(v.name, v.value);
