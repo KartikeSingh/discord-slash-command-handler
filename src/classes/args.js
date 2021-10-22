@@ -5,7 +5,7 @@ class args extends Array {
         super();
         this._collection = new Map();
         args === null || args === void 0 ? void 0 : args.forEach(v => {
-            this.push(v.value ? v.value : v);
+            this.push(v.value || v);
             if (v.name) {
                 this._collection.set(v.name, v.value);
                 this[v.name] = v.value;

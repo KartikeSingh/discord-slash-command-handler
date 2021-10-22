@@ -374,4 +374,4 @@ errorType = "noPermission" | "exception" | "lessArguments" | "timeout" | "dmOnly
 
 # Links
 [Discord Server](https://discord.gg/XYnMTQNTFh)
-[Constributor](https://discord.gg/QpuwQYDNar)
+[Constributor](https://hug-me.vercel.app/)

@@ -57,14 +57,13 @@ class Handler extends events_1.EventEmitter {
                         guildCommands.push(...data.guildCommands);
                     }
                 }
-                let commands = [];
-                this.client.commands.forEach(v => {
-                    if (this.Utils.fixType(v.type) === 1) {
-                        return commands.push({ name: v.name, description: v.description, type: v.type, options: v.options });
-                    }
-                    else {
-                        return commands.push({ name: v.name, description: v.description, type: v.type });
-                    }
+                const commands = this.client.commands.map(v => {
+                    return {
+                        name: v.name,
+                        description: v.description,
+                        type: v.type,
+                        options: this.Utils.fixType(v.type) === 1 ? v.options : undefined
+                    };
                 });
                 if (this.client.isReady() === true) {
                     this.client.application.commands.set(commands);
@@ -90,97 +89,106 @@ class Handler extends events_1.EventEmitter {
                 if (!interaction.isCommand() && !interaction.isContextMenu())
                     return;
                 const command = this.client.commands.get(interaction.commandName), message = new Message_1.default(this.client, interaction, interaction.guild), member = interaction.guild.members.cache.get(interaction.user.id);
+                if (this.options.autoDefer === true)
+                    yield interaction.deferReply();
+                const reply = this.options.autoDefer ? interaction.editReply : interaction.reply;
                 try {
                     if (command.dm !== true && !interaction.guild) {
-                        if (typeof (command.error) === "function")
+                        if (typeof command.error === "function")
                             command.error("guildOnly", command, message);
                         else if (this.listeners("guildOnly").length > 0)
                             this.emit("guildOnly", command, message);
                         else
-                            interaction.reply(this.options.guildOnlyReply.replace(/{mention}/g, message.author.toString()).replace(/{command}/g, command.name));
+                            reply(this.options.guildOnlyReply.replace(/{mention}/g, message.author.toString()).replace(/{command}/g, command.name));
                         return;
                     }
                     if (command.dm === "only" && interaction.guild) {
-                        if (typeof (command.error) === "function")
+                        if (typeof command.error === "function")
                             command.error("dmOnly", command, message);
                         else if (this.listeners("dmOnly").length > 0)
                             this.emit("dmOnly", command, message);
                         else
-                            interaction.reply(this.options.dmOnlyReply.replace(/{mention}/g, message.author.toString()).replace(/{command}/g, command.name));
+                            reply(this.options.dmOnlyReply.replace(/{mention}/g, message.author.toString()).replace(/{command}/g, command.name));
                         return;
                     }
                     if (command.ownerOnly && !this.options.owners.includes(interaction.user.id)) {
-                        if (typeof (command.error) === "function")
+                        if (typeof command.error === "function")
                             command.error("notOwner", command, message);
                         else if (this.listeners("notOwner").length > 0)
                             this.emit("notOwner", command, message);
                         else
-                            interaction.reply(this.options.notOwnerReply.replace(/{mention}/g, message.author.toString()));
+                            reply(this.options.notOwnerReply.replace(/{mention}/g, message.author.toString()));
                         return;
                     }
                     const tm = yield this.Timeout.getTimeout(interaction.user.id, interaction.commandName);
                     if (tm.from > Date.now()) {
                         const remaining = (0, ms_prettify_1.default)(tm.from - Date.now());
-                        if (typeof (command.error) === "function")
+                        if (typeof command.error === "function")
                             command.error("timeout", command, message);
                         else if (this.listeners("timeout").length > 0)
                             this.emit("timeout", command, message);
                         else
-                            interaction.reply(this.options.timeoutMessage.replace(/{remaining}/g, remaining).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
+                            reply(this.options.timeoutMessage.replace(/{remaining}/g, remaining).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
                         return;
                     }
                     const args = new args_1.default([...(_a = interaction === null || interaction === void 0 ? void 0 : interaction.options) === null || _a === void 0 ? void 0 : _a.data] || []);
-                    const command_data = {
-                        client: this.client,
-                        guild: interaction.guild,
-                        channel: interaction.channel,
-                        interaction: message,
-                        args,
-                        member: interaction.member,
-                        user: interaction.member.user,
-                        message,
-                        handler: this,
-                        subCommand: interaction.options.getSubcommand(false),
-                        subCommandGroup: interaction.options.getSubcommandGroup(false),
+                    const values = {
+                        1: this.client,
+                        2: interaction.guild,
+                        3: interaction.channel,
+                        4: message,
+                        5: args,
+                        6: interaction.member,
+                        7: interaction.member.user,
+                        8: message,
+                        9: this,
+                    }, keys = {
+                        1: "client",
+                        2: "guild",
+                        3: "channel",
+                        4: "interaction",
+                        5: "args",
+                        6: "member",
+                        7: "user",
+                        8: "message",
+                        9: "handler"
                     };
+                    const parameters = this.Utils.getParameters(keys, values, this.options.runParameters);
                     let allow = command.permissions ? command.permissions.length === 0 : true;
                     // @ts-ignore
                     if (command.permissions)
                         command.permissions.forEach((v) => { if (member.permissions.has(v))
                             allow = true; });
                     if (!allow) {
-                        if (typeof (command.error) === "function")
+                        if (typeof command.error === "function")
                             command.error("noPermissions", command, message);
                         else if (this.listeners("noPermissions").length > 0)
                             this.emit("noPermissions", command, message);
                         else
-                            interaction.reply(this.options.permissionReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
+                            reply(this.options.permissionReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
                         return;
                     }
-                    interaction.deferReply();
                     let timeout;
                     if (command.timeout) {
-                        if (typeof (command.timeout) === "string")
+                        if (typeof command.timeout === "string")
                             timeout = (0, ms_prettify_1.default)(command.timeout);
                         else
                             timeout = command.timeout;
                     }
                     if (timeout && this.options.timeout === true)
                         this.Timeout.setTimeout(interaction.user.id, command.name, Date.now() + timeout);
-                    // @ts-ignore
                     if (this.options.handleSlash === true)
-                        command.run(command_data);
+                        command.run(...parameters);
                     else
-                        this.emit("slashCommand", command, command_data);
+                        this.emit("slashCommand", command, ...parameters);
                 }
                 catch (e) {
-                    console.log(e);
-                    if (typeof (command.error) === "function")
+                    if (typeof command.error === "function")
                         command.error("exception", command, message, e);
                     else if (this.listeners("exception").length > 0)
                         this.emit("exception", command, message, e);
                     else
-                        interaction.reply(this.options.errorReply);
+                        reply(this.options.errorReply);
                 }
             }));
         });
@@ -197,10 +205,10 @@ class Handler extends events_1.EventEmitter {
                     if (cmd.length == 0)
                         return;
                     command = this.client.commands.get(cmd) || this.client.commands.get(this.client.commandAliases.get(cmd));
-                    if (!command || command.slash === true)
+                    if ((command === null || command === void 0 ? void 0 : command.slash) === true)
                         return;
                     if (command.ownerOnly && !this.options.owners.includes(message.author.id)) {
-                        if (typeof (command.error) === "function")
+                        if (typeof command.error === "function")
                             command.error("notOwner", command, message);
                         else if (this.listeners("notOwner").length > 0)
                             this.emit("notOwner", command, message);
@@ -209,7 +217,7 @@ class Handler extends events_1.EventEmitter {
                         return;
                     }
                     if (command.dm !== true && !message.guild) {
-                        if (typeof (command.error) === "function")
+                        if (typeof command.error === "function")
                             command.error("guildOnly", command, message);
                         else if (this.listeners("guildOnly").length > 0)
                             this.emit("guildOnly", command, message);
@@ -218,7 +226,7 @@ class Handler extends events_1.EventEmitter {
                         return;
                     }
                     if (command.dm === "only" && message.guild) {
-                        if (typeof (command.error) === "function")
+                        if (typeof command.error === "function")
                             command.error("dmOnly", command, message);
                         else if (this.listeners("dmOnly").length > 0)
                             this.emit("dmOnly", command, message);
@@ -228,7 +236,7 @@ class Handler extends events_1.EventEmitter {
                     }
                     const tm = yield this.Timeout.getTimeout(message.author.id, command.name);
                     if (tm.from > Date.now()) {
-                        if (typeof (command.error) === "function")
+                        if (typeof command.error === "function")
                             command.error("timeout", command, message);
                         else if (this.listeners("timeout").length > 0)
                             this.emit("timeout", command, message);
@@ -242,7 +250,7 @@ class Handler extends events_1.EventEmitter {
                         let args = command.args || "";
                         if (args === "" && command.options.length > 0)
                             command.options.forEach(v => args += v.required ? `<${v.name}>` : `[${v.name}]`);
-                        if (typeof (command.error) === "function")
+                        if (typeof command.error === "function")
                             command.error("lessArguments", command, message);
                         else if (this.listeners("lessArguments").length > 0)
                             this.emit("lessArguments", command, message);
@@ -257,7 +265,7 @@ class Handler extends events_1.EventEmitter {
                             command.permissions.forEach((v) => { if (message.member.permissions.has(v))
                                 allow = true; });
                     if (!allow) {
-                        if (typeof (command.error) === "function")
+                        if (typeof command.error === "function")
                             command.error("noPermissions", command, message);
                         else if (this.listeners("noPermissions").length > 0)
                             this.emit("noPermissions", command, message);
@@ -278,7 +286,7 @@ class Handler extends events_1.EventEmitter {
                     };
                     let timeout;
                     if (command.timeout) {
-                        if (typeof (command.timeout) === "string")
+                        if (typeof command.timeout === "string")
                             timeout = (0, ms_prettify_1.default)(command.timeout);
                         else
                             timeout = command.timeout;
@@ -292,13 +300,12 @@ class Handler extends events_1.EventEmitter {
                         this.emit("normalCommand", command, command_data);
                 }
                 catch (e) {
-                    if (typeof (command.error) === "function")
+                    if (typeof command.error === "function")
                         command.error("exception", command, message, e);
                     else if (this.listeners("exception").length > 0)
                         this.emit("exception", command, message, e);
                     else
                         message.reply(this.options.errorReply);
-                    return;
                 }
             }));
         });
