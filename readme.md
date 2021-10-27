@@ -181,7 +181,7 @@ handler.on('notOwner', (command, message) => { });
  * @param {command} command the command used
  * @param {message | interaction} message The Command Interaction or the message
  */
-handler.on('noPermission', (command, message) => {
+handler.on('noPermissions', (command, message) => {
     /*
      * commands: the command used
      * message: the Discord message object
@@ -366,7 +366,7 @@ slash_message = {
     createdAT, // timestamps of the message creation
 }
 
-errorType = "noPermission" | "exception" | "lessArguments" | "timeout" | "dmOnly" | "guildOnly";
+errorType = "noPermissions" | "exception" | "lessArguments" | "timeout" | "dmOnly" | "guildOnly";
 ```
 
 

@@ -1,6 +1,6 @@
 import { Collection, Message } from 'discord.js';
 import { EventEmitter } from 'events';
-import { readdirSync, statSync } from 'fs';
+import { readdirSync, statSync, existsSync } from 'fs';
 import Utils from '../utility';
 import Client from './Client';
 import HandlerOptions from './options';
@@ -10,7 +10,6 @@ import _Message from './Message';
 import ms from 'ms-prettify';
 import Args from './args';
 import { Command, CommandData } from '../interfaces';
-import { isGeneratorFunction } from 'util/types';
 
 class Handler extends EventEmitter {
     client: Client;
@@ -28,6 +27,8 @@ class Handler extends EventEmitter {
         this.client.commands = new Collection();
         this.client.commandAliases = new Collection();
 
+        if(existsSync(this.options.eventFolder))this.handleEvents();
+        
         this.setCommands().then(() => {
             this.emit("commandsCreated", this.client.commands, this.client.commandAliases);
             if (this.options.handleSlash) this.handleSlashCommands();
