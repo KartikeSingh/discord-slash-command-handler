@@ -137,7 +137,7 @@ class Handler extends EventEmitter {
                     1: this.client,
                     2: interaction.guild,
                     3: interaction.channel,
-                    4: message,
+                    4: interaction,
                     5: args,
                     6: interaction.member,
                     7: interaction.member.user,
