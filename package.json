@@ -2,7 +2,7 @@
   "name": "discord-slash-command-handler",
   "version": "3.0.3",
   "description": "an packaged Command handler for discord slash commands",
-  "main": "source/index.ts",
+  "main": "src/index.js",
   "typings": "source/",
   "scripts": {
     "test": "ts-node src/index.ts"

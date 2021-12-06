@@ -69,12 +69,12 @@ class HandlerOptions {
     /**
      * Whether the package have to handle normal commands or not.
      */
-    handleSlash?: boolean;
+    handleSlash?: boolean | "both";
 
     /**
      * Whether the package have to handle slash commands or not.
      */
-    handleNormal?: boolean;
+    handleNormal?: boolean | "both";
 
     /**
      * Whether the package have to add timeouts or not.

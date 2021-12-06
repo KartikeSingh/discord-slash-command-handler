@@ -27,8 +27,8 @@ class Handler extends EventEmitter {
         this.client.commands = new Collection();
         this.client.commandAliases = new Collection();
 
-        if(existsSync(this.options.eventFolder))this.handleEvents();
-        
+        if (existsSync(this.options.eventFolder)) this.handleEvents();
+
         this.setCommands().then(() => {
             this.emit("commandsCreated", this.client.commands, this.client.commandAliases);
             if (this.options.handleSlash) this.handleSlashCommands();

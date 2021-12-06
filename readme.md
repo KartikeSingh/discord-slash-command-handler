@@ -255,6 +255,7 @@ module.exports = {
 
     argsDescription: "The command category | the command name", // OPTIONAL, if you wanna add a cute little description for arguments
 
+
     // Second method
     // All properties are required, if not provided than you will get an error
     options: [
