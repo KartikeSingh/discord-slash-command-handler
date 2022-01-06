@@ -1,4 +1,4 @@
-import { Collection, Message } from 'discord.js';
+import { Collection, CommandInteraction, ContextMenuInteraction, Message } from 'discord.js';
 import { EventEmitter } from 'events';
 import { readdirSync, statSync, existsSync } from 'fs';
 import Utils from '../utility';
@@ -87,34 +87,35 @@ class Handler extends EventEmitter {
     async handleSlashCommands() {
 
         this.client.on("interactionCreate", async (interaction) => {
+            interaction = _Message<CommandInteraction>(interaction);
 
             if (!interaction.isCommand() && !interaction.isContextMenu()) return;
 
-            const command = this.client.commands.get(interaction.commandName), message = new _Message(this.client, interaction, interaction.guild), member = interaction.guild.members.cache.get(interaction.user.id);
+            const command = this.client.commands.get(interaction.commandName), member = interaction.guild.members.cache.get(interaction.user.id);
 
             if (this.options.autoDefer === true) await interaction.deferReply();
             const reply = this.options.autoDefer ? interaction.editReply : interaction.reply;
 
             try {
                 if (command.dm !== true && !interaction.guild) {
-                    if (typeof command.error === "function") command.error("guildOnly", command, message);
-                    else if (this.listeners("guildOnly").length > 0) this.emit("guildOnly", command, message);
-                    else reply(this.options.guildOnlyReply.replace(/{mention}/g, message.author.toString()).replace(/{command}/g, command.name));
+                    if (typeof command.error === "function") command.error("guildOnly", command, interaction);
+                    else if (this.listeners("guildOnly").length > 0) this.emit("guildOnly", command, interaction);
+                    else reply(this.options.guildOnlyReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
 
                     return;
                 }
                 if (command.dm === "only" && interaction.guild) {
-                    if (typeof command.error === "function") command.error("dmOnly", command, message);
-                    else if (this.listeners("dmOnly").length > 0) this.emit("dmOnly", command, message);
-                    else reply(this.options.dmOnlyReply.replace(/{mention}/g, message.author.toString()).replace(/{command}/g, command.name));
+                    if (typeof command.error === "function") command.error("dmOnly", command, interaction);
+                    else if (this.listeners("dmOnly").length > 0) this.emit("dmOnly", command, interaction);
+                    else reply(this.options.dmOnlyReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
 
                     return
                 }
 
                 if (command.ownerOnly && !this.options.owners.includes(interaction.user.id)) {
-                    if (typeof command.error === "function") command.error("notOwner", command, message);
-                    else if (this.listeners("notOwner").length > 0) this.emit("notOwner", command, message);
-                    else reply(this.options.notOwnerReply.replace(/{mention}/g, message.author.toString()));
+                    if (typeof command.error === "function") command.error("notOwner", command, interaction);
+                    else if (this.listeners("notOwner").length > 0) this.emit("notOwner", command, interaction);
+                    else reply(this.options.notOwnerReply.replace(/{mention}/g, interaction.user.toString()));
 
                     return
                 }
@@ -124,8 +125,8 @@ class Handler extends EventEmitter {
                 if (tm.from > Date.now()) {
                     const remaining = ms(tm.from - Date.now());
 
-                    if (typeof command.error === "function") command.error("timeout", command, message)
-                    else if (this.listeners("timeout").length > 0) this.emit("timeout", command, message);
+                    if (typeof command.error === "function") command.error("timeout", command, interaction)
+                    else if (this.listeners("timeout").length > 0) this.emit("timeout", command, interaction);
                     else reply(this.options.timeoutMessage.replace(/{remaining}/g, remaining).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name))
 
                     return;
@@ -141,7 +142,7 @@ class Handler extends EventEmitter {
                     5: args,
                     6: interaction.member,
                     7: interaction.member.user,
-                    8: message,
+                    8: interaction,
                     9: this,
                 }, keys = {
                     1: "client",
@@ -163,8 +164,8 @@ class Handler extends EventEmitter {
                 if (command.permissions) command.permissions.forEach((v) => { if (member.permissions.has(v)) allow = true });
 
                 if (!allow) {
-                    if (typeof command.error === "function") command.error("noPermissions", command, message);
-                    else if (this.listeners("noPermissions").length > 0) this.emit("noPermissions", command, message)
+                    if (typeof command.error === "function") command.error("noPermissions", command, interaction);
+                    else if (this.listeners("noPermissions").length > 0) this.emit("noPermissions", command, interaction)
                     else reply(this.options.permissionReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
 
                     return;
@@ -183,8 +184,8 @@ class Handler extends EventEmitter {
                 else this.emit("slashCommand", command, ...parameters);
 
             } catch (e) {
-                if (typeof command.error === "function") command.error("exception", command, message, e);
-                else if (this.listeners("exception").length > 0) this.emit("exception", command, message, e);
+                if (typeof command.error === "function") command.error("exception", command, interaction, e);
+                else if (this.listeners("exception").length > 0) this.emit("exception", command, interaction, e);
                 else reply(this.options.errorReply);
             }
         })
@@ -323,15 +324,15 @@ class Handler extends EventEmitter {
     }
 
     on(eventName: "commandsCreated", listener: (commands: Collection<string, Command>, commandAliases: Collection<string, string>) => void): this;
-    on(eventName: "exception", listener: (command: Command, message: _Message | Message, error: Error) => void): this;
+    on(eventName: "exception", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message, error: Error) => void): this;
     on(eventName: "normalCommand", listener: (command: Command, commandData: CommandData) => void): this;
-    on(eventName: "guildOnly", listener: (command: Command, commandData: CommandData) => void): this;
-    on(eventName: "dmOnly", listener: (command: Command, commandData: CommandData) => void): this;
-    on(eventName: "notOwner", listener: (command: Command, commandData: CommandData) => void): this;
-    on(eventName: "timeout", listener: (command: Command, commandData: CommandData) => void): this;
-    on(eventName: "noPermissions", listener: (command: Command, commandData: CommandData) => void): this;
-    on(eventName: "slashCommand", listener: (command: Command, commandData: CommandData) => void): this;
-    on(eventName: "lessArguments", listener: (command: Command, commandData: CommandData) => void): this;
+    on(eventName: "guildOnly", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
+    on(eventName: "dmOnly", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
+    on(eventName: "notOwner", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
+    on(eventName: "timeout", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
+    on(eventName: "noPermissions", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
+    on(eventName: "slashCommand", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
+    on(eventName: "lessArguments", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
 
     on(eventName: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(eventName, listener);
