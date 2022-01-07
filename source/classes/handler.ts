@@ -123,11 +123,9 @@ class Handler extends EventEmitter {
                 const tm = await this.Timeout.getTimeout(interaction.user.id, interaction.commandName);
 
                 if (tm.from > Date.now()) {
-                    const remaining = ms(tm.from - Date.now());
-
-                    if (typeof command.error === "function") command.error("timeout", command, interaction)
-                    else if (this.listeners("timeout").length > 0) this.emit("timeout", command, interaction);
-                    else reply(this.options.timeoutMessage.replace(/{remaining}/g, remaining).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name))
+                    if (typeof command.error === "function") command.error("timeout", command, interaction, tm.from - Date.now())
+                    else if (this.listeners("timeout").length > 0) this.emit("timeout", command, interaction, tm.from - Date.now());
+                    else reply(this.options.timeoutMessage.replace(/{remaining}/g, ms(tm.from - Date.now())).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name))
 
                     return;
                 }
@@ -232,8 +230,8 @@ class Handler extends EventEmitter {
                 const tm = await this.Timeout.getTimeout(message.author.id, command.name);
 
                 if (tm.from > Date.now()) {
-                    if (typeof command.error === "function") command.error("timeout", command, message)
-                    else if (this.listeners("timeout").length > 0) this.emit("timeout", command, message);
+                    if (typeof command.error === "function") command.error("timeout", command, message, tm.from - Date.now())
+                    else if (this.listeners("timeout").length > 0) this.emit("timeout", command, message, tm.from - Date.now());
                     else message.reply(this.options.timeoutMessage.replace(/{mention}/g, message.author.toString()).replace(/{remaining}/g, ms(tm.from - Date.now())).replace(/{command}/g, command.name))
 
                     return;
@@ -324,14 +322,14 @@ class Handler extends EventEmitter {
     }
 
     on(eventName: "commandsCreated", listener: (commands: Collection<string, Command>, commandAliases: Collection<string, string>) => void): this;
-    on(eventName: "exception", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message, error: Error) => void): this;
     on(eventName: "normalCommand", listener: (command: Command, commandData: CommandData) => void): this;
+    on(eventName: "slashCommand", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
+    on(eventName: "exception", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message, error: Error) => void): this;
     on(eventName: "guildOnly", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
     on(eventName: "dmOnly", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
     on(eventName: "notOwner", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
-    on(eventName: "timeout", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
+    on(eventName: "timeout", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message, timeRemaining: Number) => void): this;
     on(eventName: "noPermissions", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
-    on(eventName: "slashCommand", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
     on(eventName: "lessArguments", listener: (command: Command, interaction: CommandInteraction | ContextMenuInteraction | Message) => void): this;
 
     on(eventName: string | symbol, listener: (...args: any[]) => void): this {

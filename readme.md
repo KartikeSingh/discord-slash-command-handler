@@ -14,7 +14,7 @@ npm i discord-slash-command-handler
 * Advanced methods to handle commands and errors ( like timeouts, less arguments etc ) and can be automated too.
 * #### We supports discord.js@13 and above
 
-# Example bot source code
+- Example bot source code
 [here](https://github.com/KartikeSingh/discord-slash-command-bot)
 
 
@@ -138,6 +138,86 @@ run: async ({ args }) => {
 }
 ```
 
+# How to define command
+
+```js
+// file name: help.js
+
+module.exports = {
+    name: "help", // Name of the command
+
+    description: "Get some help", // Description of the command
+    
+    aliases: ["gethelp"], // The aliases for command ( don't works for slash command )
+    
+    category: "general", // the category of command
+    
+    slash: "both", // true => if only slash, false => if only normal, "both" => both slash and normal
+    
+    global: false, // false => work in all guilds provided in options, true => works globally
+
+    ownerOnly: false, // false => work for all users, true => works only for bot owners
+    
+    dm: false, // false => Guild Only, true => Both Guild And DM, "only" => DM Only
+
+    timeout: 10000 | '10s', // the timeout on the command
+    
+    args: "< command category > [ command name ]", // Command arguments, <> for required arguments, [] for optional arguments ( please provide required arguments before optional arguments )
+
+    // Arguments for slash commands
+
+    // first method
+    args: "< command category > [ command name ]", // Command arguments, <> for required arguments, [] for optional arguments ( please provide required arguments before optional arguments )
+
+    argsType: "String | String", // OPTIONAL, if you want to specify the argument type
+    // Available Types: String, Integer, Boolean, Channel, User, Role
+    // also Sub_command, Sub_command_group but these aren't tested yet
+
+    argsDescription: "The command category | the command name", // OPTIONAL, if you wanna add a cute little description for arguments
+
+
+    // Second method
+    // All properties are required, if not provided than you will get an error
+    options: [
+        {
+            name: "name of argument",
+            description: "description of the argument",
+            require: true or false,
+            type: "string"
+        }
+    ],
+
+    // OPTIONAL
+    error: async (errorType, command, message, error) => {
+        // If you want custom error handler for each command 
+        /*
+         * errorType: errorType ( check in data types at bottom for more info )
+         * command: the command
+         * message: the message object
+         * error: only in exceptions, the error message 
+         */
+    },
+
+    // Required
+    run: async (command_data) => { // you can add custom run arguments
+        // your command's code
+    }
+}
+```
+
+# Convert Normal Command to Slash Command
+
+## Additions
+```js
+// Add slash porperty
+slash: true, // true => only slash command, "both" => slash and normal command, false => normal command
+
+// you have to fix your run method or add custom run command parameter in handler options for that check #specials
+
+// All done. but there are few limitations like, message object is not Discord.Message object
+// it is an custom objected created by us its properties are listen in # datatype 's slash_command
+```
+
 # All available events
 
 ```js
@@ -218,99 +298,6 @@ handler.on('guildOnly', (command, message) => { });
 handler.on('exception', (command, message, error) => { });
 ```
 
-# How to define command
-
-```js
-// file name: help.js
-
-module.exports = {
-    name: "help", // Name of the command
-
-    description: "Get some help", // Description of the command
-    
-    aliases: ["gethelp"], // The aliases for command ( don't works for slash command )
-    
-    category: "general", // the category of command
-    
-    slash: "both", // true => if only slash, false => if only normal, "both" => both slash and normal
-    
-    global: false, // false => work in all guilds provided in options, true => works globally
-
-    ownerOnly: false, // false => work for all users, true => works only for bot owners
-    
-    dm: false, // false => Guild Only, true => Both Guild And DM, "only" => DM Only
-
-    timeout: 10000 | '10s', // the timeout on the command
-    
-    args: "< command category > [ command name ]", // Command arguments, <> for required arguments, [] for optional arguments ( please provide required arguments before optional arguments )
-
-    // Arguments for slash commands
-
-    // first method
-    args: "< command category > [ command name ]", // Command arguments, <> for required arguments, [] for optional arguments ( please provide required arguments before optional arguments )
-
-    argsType: "String | String", // OPTIONAL, if you want to specify the argument type
-    // Available Types: String, Integer, Boolean, Channel, User, Role
-    // also Sub_command, Sub_command_group but these aren't tested yet
-
-    argsDescription: "The command category | the command name", // OPTIONAL, if you wanna add a cute little description for arguments
-
-
-    // Second method
-    // All properties are required, if not provided than you will get an error
-    options: [
-        {
-            name: "name of argument",
-            description: "description of the argument",
-            require: true or false,
-            type: "string"
-        }
-    ],
-
-    // OPTIONAL
-    error: async (errorType, command, message, error) => {
-        // If you want custom error handler for each command 
-        /*
-         * errorType: errorType ( check in data types at bottom for more info )
-         * command: the command
-         * message: the message object
-         * error: only in exceptions, the error message 
-         */
-    }
-
-    // Required
-    run: async (command_data) => { // you can add custom run arguments
-        // your command's code
-    }
-}
-```
-
-# Convert Normal Command to Slash Command
-
-## Additions
-```js
-// Add slash porperty
-slash: true, // true => only slash command, "both" => slash and normal command, false => normal command
-
-// you have to fix your run method or add custom run command parameter in handler options for that check #specials
-
-// All done. but there are few limitations like, message object is not Discord.Message object
-// it is an custom objected created by us its properties are listen in # datatype 's slash_command
-```
-
-## Changes
-```js
-// Various message functions will not work
-
-// like 
-message.delete();
-
-// reply function will not work if autoDefer is true, if auto defer is false than it will work once
-// so instead use message.editReply()
-
-// Still having troubles ? contact me on discord
-```
-
 # Specials
 - ### Reload Commands
 ```js
@@ -320,6 +307,7 @@ handler.reloadCommands(); // to reload the commands
 
 ...
 ```
+
 - ### Custom run parameters
 ```js
 const { Handler } = require('discord-slash-command-handler');
