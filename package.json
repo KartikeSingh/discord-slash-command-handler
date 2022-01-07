@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "typings": "source/",
   "scripts": {
-    "test": "ts-node src/index.ts"
+    "test": "ts-node src/index.ts",
+    "push": "git add . && git commit -m \"New code\" && git push origin master",
+    "publish": "npm version minor && npm publish"
   },
   "repository": {
     "type": "git",

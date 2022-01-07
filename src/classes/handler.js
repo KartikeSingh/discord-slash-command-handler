@@ -125,13 +125,12 @@ class Handler extends events_1.EventEmitter {
                     }
                     const tm = yield this.Timeout.getTimeout(interaction.user.id, interaction.commandName);
                     if (tm.from > Date.now()) {
-                        const remaining = (0, ms_prettify_1.default)(tm.from - Date.now());
                         if (typeof command.error === "function")
-                            command.error("timeout", command, interaction);
+                            command.error("timeout", command, interaction, tm.from - Date.now());
                         else if (this.listeners("timeout").length > 0)
-                            this.emit("timeout", command, interaction);
+                            this.emit("timeout", command, interaction, tm.from - Date.now());
                         else
-                            reply(this.options.timeoutMessage.replace(/{remaining}/g, remaining).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
+                            reply(this.options.timeoutMessage.replace(/{remaining}/g, (0, ms_prettify_1.default)(tm.from - Date.now())).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
                         return;
                     }
                     const args = new args_1.default([...(_a = interaction === null || interaction === void 0 ? void 0 : interaction.options) === null || _a === void 0 ? void 0 : _a.data] || []);
@@ -240,9 +239,9 @@ class Handler extends events_1.EventEmitter {
                     const tm = yield this.Timeout.getTimeout(message.author.id, command.name);
                     if (tm.from > Date.now()) {
                         if (typeof command.error === "function")
-                            command.error("timeout", command, message);
+                            command.error("timeout", command, message, tm.from - Date.now());
                         else if (this.listeners("timeout").length > 0)
-                            this.emit("timeout", command, message);
+                            this.emit("timeout", command, message, tm.from - Date.now());
                         else
                             message.reply(this.options.timeoutMessage.replace(/{mention}/g, message.author.toString()).replace(/{remaining}/g, (0, ms_prettify_1.default)(tm.from - Date.now())).replace(/{command}/g, command.name));
                         return;
