@@ -52,5 +52,5 @@ interface Options {
     required: boolean,
     type?: string | number,
     choices?: string | number,
-    options?: Options
+    options?: [Options]
 }

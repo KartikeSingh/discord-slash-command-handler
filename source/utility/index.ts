@@ -1,11 +1,12 @@
 import Handler from "../classes/handler";
-import { Command } from "../interfaces";
+import { Command, Options } from "../interfaces";
 
 class Utils {
+    // command type
     static fixType(type: string | number = 1): number {
         if (typeof type !== "number" && typeof type !== "string") throw new Error("Command Type should be a string or a number");
 
-        type = typeof type === "string" ? type.toLowerCase() : type;
+        type = typeof type === "string" ? type?.toLowerCase() : type;
 
         if (!type || type > 3 || type < 1 || type === "chat" || type === "chat_input") return 1;
         else if (type === "user") return 2;
@@ -36,9 +37,10 @@ class Utils {
         return req.concat(opt);
     }
 
+    // option type
     static getType(type: string | number) {
         try {
-            type = typeof type === "string" ? type.toUpperCase().trim() : type;
+            type = typeof type === "string" ? type?.toUpperCase()?.trim() : type;
 
             if (typeof type === "number" && type > 0 && type < 9) return type;
             if (!type) return 3;
@@ -49,8 +51,22 @@ class Utils {
         }
     }
 
+    static async fixOptions(this: Handler, options: Options[]) {
+        return new Promise(async (res) => {
+            if (!options || !options?.length) return res(undefined);
+            
+            for (let i = 0; i < options.length; i++) {
+                options[i].type = this.Utils.getType(options[i].type);
+                options[i].name = options[i].name?.trim()?.replace(/ /g, "-");
+
+                if (options[i]?.options?.length > 0) options[i].options = await this.Utils.fixOptions.bind(this)(options[i]?.options);
+            }
+            res(options);
+        })
+    }
+
     static add(this: Handler, commands: string[], extraFolder: string = "") {
-        return new Promise((res) => {
+        return new Promise(async (res) => {
             const globalCommands = [], guildCommands = [];
             for (let i = 0; i < commands.length; i++) {
                 const command: Command = require(`${this.options.commandFolder}${extraFolder}/${commands[i]}`) || {};
@@ -69,12 +85,8 @@ class Utils {
                 if (!command.description) throw new Error("Description is required in a slash command\n Description was not found in " + command.name)
 
                 if ((!command.options || command.options && command.options.length < 1) && command.args) command.options = this.Utils.getOptions(command.args, command.argsDescription, command.argsType);
-                else if (command.options && command.options.length > 0) {
-                    for (let i = 0; i < command.options.length; i++) {
-                        command.options[i].type = this.Utils.getType(command.options[i].type);
-                        command.options[i].name = command.options[i].name?.trim()?.replace(/ /g, "-")
-                    }
-                }
+
+                command.options = await this.Utils.fixOptions.bind(this)(command.options);
 
                 const command_data = {
                     name: command.name,

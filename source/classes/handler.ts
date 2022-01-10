@@ -61,7 +61,7 @@ class Handler extends EventEmitter {
                     return {
                         name: v.name,
                         description: v.description,
-                        type: v.type,
+                        type: this.Utils.fixType(v.type),
                         options: this.Utils.fixType(v.type) === 1 ? v.options : undefined
                     };
                 });
