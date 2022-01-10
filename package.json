@@ -1,13 +1,13 @@
 {
   "name": "discord-slash-command-handler",
-  "version": "3.2.1",
+  "version": "3.2.0",
   "description": "an packaged Command handler for discord slash commands",
   "main": "src/index.js",
   "typings": "source/",
   "scripts": {
     "test": "ts-node src/index.ts",
     "push": "git add . && git commit -m \"New code\" && git push origin master",
-    "publish": "npm version minor && npm publish"
+    "publish": "npm version patch && npm publish"
   },
   "repository": {
     "type": "git",
