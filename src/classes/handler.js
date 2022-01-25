@@ -94,7 +94,6 @@ class Handler extends events_1.EventEmitter {
                 const command = this.client.commands.get(interaction.commandName), member = interaction.guild.members.cache.get(interaction.user.id);
                 if (this.options.autoDefer === true)
                     yield interaction.deferReply();
-                const reply = this.options.autoDefer ? interaction.editReply : interaction.reply;
                 try {
                     if (command.dm !== true && !interaction.guild) {
                         if (typeof command.error === "function")
@@ -102,7 +101,7 @@ class Handler extends events_1.EventEmitter {
                         else if (this.listeners("guildOnly").length > 0)
                             this.emit("guildOnly", command, interaction);
                         else
-                            reply(this.options.guildOnlyReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
+                            this.Utils.replyInteraction(interaction, this.options.guildOnlyReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
                         return;
                     }
                     if (command.dm === "only" && interaction.guild) {
@@ -111,7 +110,7 @@ class Handler extends events_1.EventEmitter {
                         else if (this.listeners("dmOnly").length > 0)
                             this.emit("dmOnly", command, interaction);
                         else
-                            reply(this.options.dmOnlyReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
+                            this.Utils.replyInteraction(interaction, this.options.dmOnlyReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
                         return;
                     }
                     if (command.ownerOnly && !this.options.owners.includes(interaction.user.id)) {
@@ -120,7 +119,7 @@ class Handler extends events_1.EventEmitter {
                         else if (this.listeners("notOwner").length > 0)
                             this.emit("notOwner", command, interaction);
                         else
-                            reply(this.options.notOwnerReply.replace(/{mention}/g, interaction.user.toString()));
+                            this.Utils.replyInteraction(interaction, this.options.notOwnerReply.replace(/{mention}/g, interaction.user.toString()));
                         return;
                     }
                     const tm = yield this.Timeout.getTimeout(interaction.user.id, interaction.commandName);
@@ -130,7 +129,7 @@ class Handler extends events_1.EventEmitter {
                         else if (this.listeners("timeout").length > 0)
                             this.emit("timeout", command, interaction, tm.from - Date.now());
                         else
-                            reply(this.options.timeoutMessage.replace(/{remaining}/g, (0, ms_prettify_1.default)(tm.from - Date.now())).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
+                            this.Utils.replyInteraction(interaction, this.options.timeoutMessage.replace(/{remaining}/g, (0, ms_prettify_1.default)(tm.from - Date.now())).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
                         return;
                     }
                     const args = new args_1.default([...(_a = interaction === null || interaction === void 0 ? void 0 : interaction.options) === null || _a === void 0 ? void 0 : _a.data] || []);
@@ -167,7 +166,7 @@ class Handler extends events_1.EventEmitter {
                         else if (this.listeners("noPermissions").length > 0)
                             this.emit("noPermissions", command, interaction);
                         else
-                            reply(this.options.permissionReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
+                            this.Utils.replyInteraction(interaction, this.options.permissionReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
                         return;
                     }
                     let timeout;
@@ -190,7 +189,7 @@ class Handler extends events_1.EventEmitter {
                     else if (this.listeners("exception").length > 0)
                         this.emit("exception", command, interaction, e);
                     else
-                        reply(this.options.errorReply);
+                        this.Utils.replyInteraction(interaction, this.options.errorReply);
                 }
             }));
         });

@@ -134,5 +134,16 @@ class Utils {
         });
         return parameters;
     }
+    static replyInteraction(interaction, message) {
+        try {
+            if (interaction.replied)
+                interaction.followUp(message);
+            else
+                interaction.reply(message);
+        }
+        catch (e) {
+            interaction.channel.send(`${interaction.user.toString()}, ${message}`);
+        }
+    }
 }
 exports.default = Utils;
