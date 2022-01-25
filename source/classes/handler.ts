@@ -94,20 +94,19 @@ class Handler extends EventEmitter {
             const command = this.client.commands.get(interaction.commandName), member = interaction.guild.members.cache.get(interaction.user.id);
 
             if (this.options.autoDefer === true) await interaction.deferReply();
-            const reply = this.options.autoDefer ? interaction.editReply : interaction.reply;
 
             try {
                 if (command.dm !== true && !interaction.guild) {
                     if (typeof command.error === "function") command.error("guildOnly", command, interaction);
                     else if (this.listeners("guildOnly").length > 0) this.emit("guildOnly", command, interaction);
-                    else reply(this.options.guildOnlyReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
+                    else this.Utils.replyInteraction(interaction,this.options.guildOnlyReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
 
                     return;
                 }
                 if (command.dm === "only" && interaction.guild) {
                     if (typeof command.error === "function") command.error("dmOnly", command, interaction);
                     else if (this.listeners("dmOnly").length > 0) this.emit("dmOnly", command, interaction);
-                    else reply(this.options.dmOnlyReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
+                    else this.Utils.replyInteraction(interaction,this.options.dmOnlyReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
 
                     return
                 }
@@ -115,7 +114,7 @@ class Handler extends EventEmitter {
                 if (command.ownerOnly && !this.options.owners.includes(interaction.user.id)) {
                     if (typeof command.error === "function") command.error("notOwner", command, interaction);
                     else if (this.listeners("notOwner").length > 0) this.emit("notOwner", command, interaction);
-                    else reply(this.options.notOwnerReply.replace(/{mention}/g, interaction.user.toString()));
+                    else this.Utils.replyInteraction(interaction,this.options.notOwnerReply.replace(/{mention}/g, interaction.user.toString()));
 
                     return
                 }
@@ -125,7 +124,7 @@ class Handler extends EventEmitter {
                 if (tm.from > Date.now()) {
                     if (typeof command.error === "function") command.error("timeout", command, interaction, tm.from - Date.now())
                     else if (this.listeners("timeout").length > 0) this.emit("timeout", command, interaction, tm.from - Date.now());
-                    else reply(this.options.timeoutMessage.replace(/{remaining}/g, ms(tm.from - Date.now())).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name))
+                    else this.Utils.replyInteraction(interaction,this.options.timeoutMessage.replace(/{remaining}/g, ms(tm.from - Date.now())).replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name))
 
                     return;
                 }
@@ -164,7 +163,7 @@ class Handler extends EventEmitter {
                 if (!allow) {
                     if (typeof command.error === "function") command.error("noPermissions", command, interaction);
                     else if (this.listeners("noPermissions").length > 0) this.emit("noPermissions", command, interaction)
-                    else reply(this.options.permissionReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
+                    else this.Utils.replyInteraction(interaction,this.options.permissionReply.replace(/{mention}/g, interaction.user.toString()).replace(/{command}/g, command.name));
 
                     return;
                 }
@@ -184,7 +183,7 @@ class Handler extends EventEmitter {
             } catch (e) {
                 if (typeof command.error === "function") command.error("exception", command, interaction, e);
                 else if (this.listeners("exception").length > 0) this.emit("exception", command, interaction, e);
-                else reply(this.options.errorReply);
+                else this.Utils.replyInteraction(interaction,this.options.errorReply);
             }
         })
     }

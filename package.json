@@ -6,8 +6,9 @@
   "typings": "source/",
   "scripts": {
     "test": "ts-node src/index.ts",
-    "push": "git add . && git commit -m \"New code\" && git push origin master",
-    "publish": "npm version patch && npm publish"
+    "cm": "git add . && git commit -m",
+    "push":"git push origin master",
+    "pub": "tsc && npm run cm --m=comipiled_code && npm run push && npm version patch && npm publish"
   },
   "repository": {
     "type": "git",

@@ -1,3 +1,4 @@
+import { CommandInteraction } from "discord.js";
 import Handler from "../classes/handler";
 import { Command, Options } from "../interfaces";
 
@@ -54,7 +55,7 @@ class Utils {
     static async fixOptions(this: Handler, options: Options[]) {
         return new Promise(async (res) => {
             if (!options || !options?.length) return res(undefined);
-            
+
             for (let i = 0; i < options.length; i++) {
                 options[i].type = this.Utils.getType(options[i].type);
                 options[i].name = options[i].name?.trim()?.replace(/ /g, "-");
@@ -128,6 +129,15 @@ class Utils {
         })
 
         return parameters;
+    }
+
+    static replyInteraction(interaction: CommandInteraction, message: string) {
+        try {
+            if (interaction.replied) interaction.followUp(message);
+            else interaction.reply(message);
+        } catch (e) {
+            interaction.channel.send(`${interaction.user.toString()}, ${message}`);
+        }
     }
 }
 
