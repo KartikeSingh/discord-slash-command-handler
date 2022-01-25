@@ -4,7 +4,7 @@ export default <tp>(interaction: any): tp => {
     const args = [];
     const guild = interaction.guild, client = interaction.client
 
-    interaction.options.data?.forEach((v) => args.push(v.value))
+    interaction?.options?.data?.forEach((v) => args.push(v.value))
 
     interaction.author = interaction.user;
     interaction.content = `/${interaction.commandName} ${args.join(" ")}`;
@@ -15,7 +15,7 @@ export default <tp>(interaction: any): tp => {
         roles: new Collection(),
     }
 
-    args.forEach(v => {
+    args?.forEach(v => {
         let member = guild?.members?.cache?.get(v);
         let user = client?.users?.cache?.get(v);
         let channel = guild?.channels?.cache?.get(v);

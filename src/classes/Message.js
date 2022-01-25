@@ -2,10 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
 exports.default = (interaction) => {
-    var _a;
+    var _a, _b;
     const args = [];
     const guild = interaction.guild, client = interaction.client;
-    (_a = interaction.options.data) === null || _a === void 0 ? void 0 : _a.forEach((v) => args.push(v.value));
+    (_b = (_a = interaction === null || interaction === void 0 ? void 0 : interaction.options) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.forEach((v) => args.push(v.value));
     interaction.author = interaction.user;
     interaction.content = `/${interaction.commandName} ${args.join(" ")}`;
     interaction.mentions = {
@@ -14,7 +14,7 @@ exports.default = (interaction) => {
         users: new discord_js_1.Collection(),
         roles: new discord_js_1.Collection(),
     };
-    args.forEach(v => {
+    args === null || args === void 0 ? void 0 : args.forEach(v => {
         var _a, _b, _c, _d, _e, _f, _g, _h;
         let member = (_b = (_a = guild === null || guild === void 0 ? void 0 : guild.members) === null || _a === void 0 ? void 0 : _a.cache) === null || _b === void 0 ? void 0 : _b.get(v);
         let user = (_d = (_c = client === null || client === void 0 ? void 0 : client.users) === null || _c === void 0 ? void 0 : _c.cache) === null || _d === void 0 ? void 0 : _d.get(v);
