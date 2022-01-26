@@ -15,7 +15,6 @@ const fs_1 = require("fs");
 const utility_1 = require("../utility");
 const options_1 = require("./options");
 const timeout_1 = require("./timeout");
-const Message_1 = require("./Message");
 const ms_prettify_1 = require("ms-prettify");
 const args_1 = require("./args");
 class Handler extends events_1.EventEmitter {
@@ -88,7 +87,6 @@ class Handler extends events_1.EventEmitter {
         return __awaiter(this, void 0, void 0, function* () {
             this.client.on("interactionCreate", (interaction) => __awaiter(this, void 0, void 0, function* () {
                 var _a;
-                interaction = (0, Message_1.default)(interaction);
                 if (!interaction.isCommand() && !interaction.isContextMenu())
                     return;
                 const command = this.client.commands.get(interaction.commandName), member = interaction.guild.members.cache.get(interaction.user.id);

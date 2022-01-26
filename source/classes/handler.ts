@@ -6,7 +6,6 @@ import Client from './Client';
 import HandlerOptions from './options';
 import Options from './options';
 import Timeout from './timeout';
-import _Message from './Message';
 import ms from 'ms-prettify';
 import Args from './args';
 import { Command, CommandData } from '../interfaces';
@@ -87,10 +86,7 @@ class Handler extends EventEmitter {
     async handleSlashCommands() {
 
         this.client.on("interactionCreate", async (interaction) => {
-            interaction = _Message<CommandInteraction>(interaction);
-
             if (!interaction.isCommand() && !interaction.isContextMenu()) return;
-
 
             const command = this.client.commands.get(interaction.commandName), member = interaction.guild.members.cache.get(interaction.user.id);
 

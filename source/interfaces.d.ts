@@ -1,7 +1,6 @@
 import { CommandInteraction, ContextMenuInteraction, DMChannel, Guild, GuildMember, Message, TextBasedChannels, TextChannel, User } from 'discord.js';
 import Handler from './classes/handler';
 import Args from './classes/args';
-import _Message from './classes/Message';
 import Client from './classes/Client';
 
 export interface CommandData {

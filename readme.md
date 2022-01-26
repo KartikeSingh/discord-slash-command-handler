@@ -13,7 +13,7 @@ npm i discord-slash-command-handler
 * Supports Database for timeouts.
 * Automatic Handling
 * Advanced methods to handle commands and errors ( like timeouts, less arguments etc ) and can be automated too.
-* #### We supports discord.js@13 and above
+* We support discord.js@13.x.x
 
 - Example bot source code
 [here](https://github.com/KartikeSingh/discord-slash-command-bot)
