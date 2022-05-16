@@ -1,4 +1,4 @@
-import  { Client, ClientOptions, Collection } from 'discord.js';
+import { Client, ClientOptions, Collection } from 'discord.js';
 import { Command } from '../interfaces';
 
 class client extends Client {

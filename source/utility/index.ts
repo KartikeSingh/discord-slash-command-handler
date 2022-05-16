@@ -1,4 +1,4 @@
-import { CommandInteraction } from "discord.js";
+import { ButtonInteraction, CommandInteraction, ContextMenuInteraction, Interaction, MessageComponentInteraction, SelectMenuInteraction } from "discord.js";
 import Handler from "../classes/handler";
 import { Command, Options } from "../interfaces";
 
@@ -96,8 +96,8 @@ class Utils {
                     type: this.Utils.fixType(command.type),
                 }
 
-                if (command.global) globalCommands.push(command_data)
-                else guildCommands.push(command_data);
+                if (command.guildOnly) guildCommands.push(command_data);
+                else globalCommands.push(command_data);
             }
 
             res({ globalCommands, guildCommands });
@@ -131,7 +131,7 @@ class Utils {
         return parameters;
     }
 
-    static replyInteraction(interaction: CommandInteraction, message: string) {
+    static replyInteraction(interaction: CommandInteraction | ContextMenuInteraction | MessageComponentInteraction | ButtonInteraction | SelectMenuInteraction, message: string) {
         try {
             if (interaction.replied) interaction.followUp(message);
             else interaction.reply(message);

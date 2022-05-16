@@ -14,10 +14,10 @@ npm i discord-slash-command-handler
 * Automatic Handling
 * Advanced methods to handle commands and errors ( like timeouts, less arguments etc ) and can be automated too.
 * We support discord.js@13.x.x
+* Example [source code](https://github.com/KartikeSingh/discord-slash-command-bot)
 
-- Example bot source code
-[here](https://github.com/KartikeSingh/discord-slash-command-bot)
-
+## Request
+Please provide suggestions, bug reports either on [discord](https://discord.gg/PBFj276RUw) or [github issues](https://github.com/KartikeSingh/discord-slash-command-handler/issues/)
 
 # Basic handler example
 
@@ -179,6 +179,7 @@ module.exports = {
 
     // Second method
     // All properties are required, if not provided than you will get an error
+    // NOTE: You can also use a command builder for the options
     options: [
         {
             name: "name of argument",
@@ -364,4 +365,4 @@ errorType = "noPermissions" | "exception" | "lessArguments" | "timeout" | "dmOnl
 
 # Links
 [Discord Server](https://discord.gg/XYnMTQNTFh)
-[Constributor](https://hug-me.vercel.app/)
+[Refactored By](https://hug-me.vercel.app/)

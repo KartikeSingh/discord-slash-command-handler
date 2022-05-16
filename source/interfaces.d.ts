@@ -26,6 +26,7 @@ export interface Command {
     category?: string,
     slash?: "both" | boolean,
     global?: boolean,
+    guildOnly?: boolean,
     ownerOnly?: boolean,
     dm?: "only" | boolean,
     timeout?: number | string,

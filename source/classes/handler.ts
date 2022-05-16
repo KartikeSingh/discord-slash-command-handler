@@ -36,42 +36,41 @@ class Handler extends EventEmitter {
     }
 
     setCommands() {
-        const globalCommands: Array<Command> = [], guildCommands: Array<Command> = [];
-
         return new Promise(async (resolve, reject) => {
             try {
                 let Commands = readdirSync(this.options.commandFolder)?.filter(file => this.options.commandType === "file" ? file.endsWith(".ts") || file.endsWith(".js") : statSync(`${this.options.commandFolder}/${file}`).isDirectory()), i;
                 if (Commands.length === 0) return reject("No Folders/file in the provided location");
 
-                if (this.options.commandType === "file") {
-                    const data = await this.Utils.add.bind(this)(Commands);
-                    globalCommands.push(...data.globalCommands);
-                    guildCommands.push(...data.guildCommands);
-                }
-                else {
-                    for (let i = 0; i < Commands.length; i++) {
-                        const data = await this.Utils.add.bind(this)(readdirSync(`${this.options.commandFolder}/${Commands[i]}`).filter(file => file.endsWith(".ts") || file.endsWith(".js")), `/${Commands[i]}`);
-                        globalCommands.push(...data.globalCommands);
-                        guildCommands.push(...data.guildCommands);
-                    }
-                }
+                if (this.options.commandType === "file") await this.Utils.add.bind(this)(Commands);
+                else for (let i = 0; i < Commands.length; i++) await this.Utils.add.bind(this)(readdirSync(`${this.options.commandFolder}/${Commands[i]}`).filter(file => file.endsWith(".ts") || file.endsWith(".js")), `/${Commands[i]}`);
 
-                const commands = this.client.commands.map(v => {
+                const commandsGuild = this.client.commands.filter(v => v.guildOnly).map(v => {
                     return {
                         name: v.name,
                         description: v.description,
                         type: this.Utils.fixType(v.type),
-                        options: this.Utils.fixType(v.type) === 1 ? v.options : undefined
+                        // @ts-ignore
+                        options: this.Utils.fixType(v.type) === 1 ? v.options.toJSON ? v.options.toJSON() : v.options : undefined
+                    };
+                });
+
+                const commandsGlobal = this.client.commands.filter(v => !v.guildOnly).map(v => {
+                    return {
+                        name: v.name,
+                        description: v.description,
+                        type: this.Utils.fixType(v.type),
+                        // @ts-ignore
+                        options: this.Utils.fixType(v.type) === 1 ? v.options.toJSON ? v.options.toJSON() : v.options : undefined
                     };
                 });
 
                 if (this.client.isReady() === true) {
-                    this.client.application.commands.set(commands)
-                    this.options.slashGuilds.forEach(v => this.client.application.commands.set(commands, v));
+                    this.client.application.commands.set(commandsGlobal)
+                    this.options.slashGuilds.forEach(v => this.client.application.commands.set(commandsGuild, v));
                 } else {
                     this.client.once('ready', () => {
-                        this.client.application.commands.set(commands)
-                        this.options.slashGuilds.forEach(v => this.client.application.commands.set(commands, v));
+                        this.client.application.commands.set(commandsGlobal)
+                        this.options.slashGuilds.forEach(v => this.client.application.commands.set(commandsGuild, v));
                     })
                 }
 
