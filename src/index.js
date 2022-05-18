@@ -1,7 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Options = exports.Client = exports.TimeoutModel = exports.Handler = void 0;
-exports.Handler = require("./classes/handler");
-exports.TimeoutModel = require("./models/timeout");
-exports.Client = require("./classes/Client");
-exports.Options = require("./classes/options");
+const handler_1 = require("./classes/handler");
+exports.Handler = handler_1.default;
+const timeout_1 = require("./models/timeout");
+exports.TimeoutModel = timeout_1.default;
+const Client_1 = require("./classes/Client");
+exports.Client = Client_1.default;
+const options_1 = require("./classes/options");
+exports.Options = options_1.default;

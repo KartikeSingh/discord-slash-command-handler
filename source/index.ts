@@ -1,4 +1,11 @@
-export * as Handler from "./classes/handler"
-export * as TimeoutModel from "./models/timeout"
-export * as Client from "./classes/Client"
-export * as Options from "./classes/options"
+import Handler from "./classes/handler"
+import TimeoutModel from "./models/timeout"
+import Client from "./classes/Client"
+import Options from "./classes/options"
+
+export {
+    Handler,
+    TimeoutModel,
+    Client,
+    Options
+}
