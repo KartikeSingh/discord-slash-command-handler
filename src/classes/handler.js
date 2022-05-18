@@ -39,41 +39,43 @@ class Handler extends events_1.EventEmitter {
         });
     }
     setCommands() {
-        const globalCommands = [], guildCommands = [];
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             var _a;
             try {
                 let Commands = (_a = (0, fs_1.readdirSync)(this.options.commandFolder)) === null || _a === void 0 ? void 0 : _a.filter(file => this.options.commandType === "file" ? file.endsWith(".ts") || file.endsWith(".js") : (0, fs_1.statSync)(`${this.options.commandFolder}/${file}`).isDirectory()), i;
                 if (Commands.length === 0)
                     return reject("No Folders/file in the provided location");
-                if (this.options.commandType === "file") {
-                    const data = yield this.Utils.add.bind(this)(Commands);
-                    globalCommands.push(...data.globalCommands);
-                    guildCommands.push(...data.guildCommands);
-                }
-                else {
-                    for (let i = 0; i < Commands.length; i++) {
-                        const data = yield this.Utils.add.bind(this)((0, fs_1.readdirSync)(`${this.options.commandFolder}/${Commands[i]}`).filter(file => file.endsWith(".ts") || file.endsWith(".js")), `/${Commands[i]}`);
-                        globalCommands.push(...data.globalCommands);
-                        guildCommands.push(...data.guildCommands);
-                    }
-                }
-                const commands = this.client.commands.map(v => {
+                if (this.options.commandType === "file")
+                    yield this.Utils.add.bind(this)(Commands);
+                else
+                    for (let i = 0; i < Commands.length; i++)
+                        yield this.Utils.add.bind(this)((0, fs_1.readdirSync)(`${this.options.commandFolder}/${Commands[i]}`).filter(file => file.endsWith(".ts") || file.endsWith(".js")), `/${Commands[i]}`);
+                const commandsGuild = this.client.commands.filter(v => v.guildOnly).map(v => {
                     return {
                         name: v.name,
                         description: v.description,
                         type: this.Utils.fixType(v.type),
-                        options: this.Utils.fixType(v.type) === 1 ? v.options : undefined
+                        // @ts-ignore
+                        options: this.Utils.fixType(v.type) === 1 ? v.options.toJSON ? v.options.toJSON() : v.options : undefined
+                    };
+                });
+                const commandsGlobal = this.client.commands.filter(v => !v.guildOnly).map(v => {
+                    return {
+                        name: v.name,
+                        description: v.description,
+                        type: this.Utils.fixType(v.type),
+                        // @ts-ignore
+                        options: this.Utils.fixType(v.type) === 1 ? v.options.toJSON ? v.options.toJSON() : v.options : undefined
                     };
                 });
                 if (this.client.isReady() === true) {
-                    this.client.application.commands.set(commands);
-                    this.options.slashGuilds.forEach(v => this.client.application.commands.set(commands, v));
+                    this.client.application.commands.set(commandsGlobal);
+                    this.options.slashGuilds.forEach(v => this.client.application.commands.set(commandsGuild, v));
                 }
                 else {
                     this.client.once('ready', () => {
-                        this.client.application.commands.set(commands);
-                        this.options.slashGuilds.forEach(v => this.client.application.commands.set(commands, v));
+                        this.client.application.commands.set(commandsGlobal);
+                        this.options.slashGuilds.forEach(v => this.client.application.commands.set(commandsGuild, v));
                     });
                 }
                 resolve({ commands: this.client.commands, commandAliases: this.client.commandAliases });

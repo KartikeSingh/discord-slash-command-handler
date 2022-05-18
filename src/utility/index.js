@@ -99,10 +99,10 @@ class Utils {
                     options: command.options || [],
                     type: this.Utils.fixType(command.type),
                 };
-                if (command.global)
-                    globalCommands.push(command_data);
-                else
+                if (command.guildOnly)
                     guildCommands.push(command_data);
+                else
+                    globalCommands.push(command_data);
             }
             res({ globalCommands, guildCommands });
         }));

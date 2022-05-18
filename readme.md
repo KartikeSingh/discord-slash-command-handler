@@ -23,8 +23,9 @@ Please provide suggestions, bug reports either on [discord](https://discord.gg/P
 
 ```js
 // NOTE: This package only supports Discord.js V 13
-const client = new Discord.client(options);
-const { Handler } = require('discord-slash-command-handler');
+const { Handler, Client } = require('discord-slash-command-handler');
+// Client class is same as discord js client but with additional properties
+const client = new Client(options);
 
 client.on('ready', () => {
     // replace src/commands to the path with your commands folder.
@@ -40,8 +41,8 @@ client.login(token);
 # Complex handler example
 
 ```js
-const client = new Discord.client(options);
-const { Handler } = require('discord-slash-command-handler');
+const { Handler, Client } = require('discord-slash-command-handler');
+const client = new Client(options);
 
 client.on('ready', () => {
     // replace src/commands to the path to your commands folder.
