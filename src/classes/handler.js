@@ -60,12 +60,13 @@ class Handler extends events_1.EventEmitter {
                     };
                 });
                 const commandsGlobal = this.client.commands.filter(v => !v.guildOnly).map(v => {
+                    var _a;
                     return {
                         name: v.name,
                         description: v.description,
                         type: this.Utils.fixType(v.type),
                         // @ts-ignore
-                        options: this.Utils.fixType(v.type) === 1 ? v.options.toJSON ? v.options.toJSON() : v.options : undefined
+                        options: this.Utils.fixType(v.type) === 1 ? ((_a = v.options) === null || _a === void 0 ? void 0 : _a.toJSON) ? v.options.toJSON() : v.options : undefined
                     };
                 });
                 if (this.client.isReady() === true) {

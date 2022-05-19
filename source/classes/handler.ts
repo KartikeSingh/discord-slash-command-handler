@@ -60,7 +60,7 @@ class Handler extends EventEmitter {
                         description: v.description,
                         type: this.Utils.fixType(v.type),
                         // @ts-ignore
-                        options: this.Utils.fixType(v.type) === 1 ? v.options.toJSON ? v.options.toJSON() : v.options : undefined
+                        options: this.Utils.fixType(v.type) === 1 ? v.options?.toJSON ? v.options.toJSON() : v.options : undefined
                     };
                 });
 
