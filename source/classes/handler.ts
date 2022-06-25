@@ -70,7 +70,11 @@ class Handler extends EventEmitter {
                 } else {
                     this.client.once('ready', () => {
                         this.client.application.commands.set(commandsGlobal)
-                        this.options.slashGuilds.forEach(v => this.client.application.commands.set(commandsGuild, v));
+                        if (Array.isArray(this.options.slashGuilds)) {
+                            this.options.slashGuilds.forEach(v => this.client.application.commands.set(commandsGlobal, v));
+                        } else {
+                            this.client.application.commands.set(commandsGlobal, this.options.slashGuilds);
+                        }
                     })
                 }
 
