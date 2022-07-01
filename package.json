@@ -2,8 +2,8 @@
   "name": "discord-slash-command-handler",
   "version": "3.2.2",
   "description": "an packaged Command handler for discord slash commands",
-  "main": "src/index.js",
-  "typings": "source/",
+  "main": "dist/index.js",
+  "typings": "src/",
   "scripts": {
     "test": "ts-node src/index.ts",
     "bug-fix": "tsc && git add . && git commit -m \"bug fix\" && git push origin master && npm version patch && npm publish"
@@ -19,7 +19,7 @@
     "handler"
   ],
   "author": "shisui",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "discord.js": "^13.2.0",
     "mongoose": "^6.0.4",
